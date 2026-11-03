@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>诊后助手 · 需求确定版 v1.0（合成数据 · 双周期）</title>
+<style>
+/* ===== 设计令牌 v0.2「纸感备忘录」（沿用） ===== */
+:root{
+  --paper:#FAF8F3; --card:#FFFFFF; --ink:#1C2B33; --ink-2:#5B6B75;
+  --hair:#E9E2D6; --teal:#12586F; --teal-deep:#0C3F52; --teal-tint:#EAF2F4;
+  --apricot:#F6E8D9; --brown:#7C4E2D; --seal:#A63D2F;
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:#EDEAE3;font-family:var(--sans);color:var(--ink);font-size:15px;line-height:1.7}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* 演示控制条 */
+.demobar{max-width:940px;margin:0 auto;padding:14px 16px 6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.demobar h1{font-size:14.5px;margin:0;font-weight:600;color:#3d4a52;flex:1 1 260px}
+.demobar .note{font-size:12px;color:#7a848c;width:100%;margin:0}
+.demo-btn{font-size:13px;padding:8px 13px;border-radius:8px;border:1.5px solid var(--teal);background:#fff;color:var(--teal);cursor:pointer}
+.demo-btn.warn{border-color:var(--seal);color:var(--seal)}
+.demo-btn:hover{background:#F0F7FA}
+
+/* 手机 */
+.stage{display:flex;justify-content:center;padding:8px 12px 56px}
+.phone{width:390px;height:844px;background:var(--paper);border-radius:28px;box-shadow:0 24px 60px rgba(28,43,51,.16);overflow:hidden;position:relative;display:flex;flex-direction:column;border:1px solid #DDD5C8}
+@media (max-width:430px){body{background:var(--paper)}.phone{width:100%;height:100dvh;border:none;border-radius:0;box-shadow:none}}
+.statusbar{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:15px;font-weight:600;flex-shrink:0}
+.statusbar .sim{font-size:10px;color:#fff;background:var(--teal);border-radius:6px;padding:2px 8px;font-weight:500}
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;padding:14px 20px 24px;display:none;flex-direction:column;gap:16px}
+.screen.active{display:flex;animation:screenIn 220ms ease-out both}
+@keyframes screenIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+/* 通用 */
+.eyebrow{font-size:11px;letter-spacing:.22em;color:var(--ink-2);margin:0}
+.pt{font-family:var(--serif);font-size:25px;font-weight:700;letter-spacing:.02em;margin:0;line-height:1.25}
+.sub{font-size:12.5px;color:var(--ink-2);margin:2px 0 0}
+.card{background:var(--card);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 0 var(--hair)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:11px;color:var(--ink-2);background:#F1EFEA;border-radius:5px;padding:3px 9px;letter-spacing:.08em}
+.tag.warm{color:var(--brown);background:var(--apricot)}
+.btn{height:48px;border-radius:9px;border:none;font-size:15.5px;font-weight:600;cursor:pointer;width:100%;transition:background .15s ease}
+.btn:disabled{background:#B9C4C9;color:#fff;cursor:not-allowed}
+.b1{background:var(--teal);color:#fff}
+.b1:hover:not(:disabled){background:var(--teal-deep)}
+.b2{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+.b2:hover{background:#F0F7FA}
+.link{font-size:13.5px;color:var(--teal);font-weight:600;background:none;border:none;cursor:pointer;padding:0;text-align:left}
+.link.center{width:100%;text-align:center}
+.footnote{font-size:12px;color:var(--ink-2)}
+.divider{height:1px;background:var(--hair);width:100%}
+.banner{background:var(--apricot);border-radius:8px;padding:10px 12px;font-size:13.5px;font-weight:500;color:var(--brown)}
+.banner.alert{background:#FBEDE9}
+.banner.ok{background:#EEF6EF;color:#2E6B4F}
+
+/* 周期条 + 操作人 */
+.cyclebar{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--teal-tint);border-radius:9px;padding:9px 12px;font-size:12px;color:var(--teal);line-height:1.5}
+.cyclebar .who{font-weight:600;white-space:nowrap}
+
+/* 出处块 */
+.srccard{background:var(--teal-tint);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:7px}
+.srccard .cap{font-size:11px;letter-spacing:.2em;color:var(--teal);font-weight:600}
+.srccard .txt{font-size:13.5px;line-height:1.75}
+
+/* 四类卡 */
+.tcard{border-left:3px solid var(--teal)}
+.tcard .thead{display:flex;justify-content:space-between;align-items:center}
+.tcard .tname{font-family:var(--serif);font-size:16.5px;font-weight:700}
+.tcard ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.tcard li{font-size:14px;line-height:1.7;padding-left:20px;position:relative;font-variant-numeric:tabular-nums}
+.tcard li::before{content:attr(data-no);position:absolute;left:0;top:2px;font-family:var(--serif);color:var(--teal);font-size:12.5px}
+.tcard .ok{font-size:12.5px;color:var(--teal);font-weight:600;align-self:flex-start;background:var(--teal-tint);border:none;border-radius:6px;padding:8px 16px;cursor:pointer}
+.tcard.verified{border-left-color:var(--seal)}
+.tcard.verified .ok{background:transparent;border:1.5px solid var(--seal);color:var(--seal);cursor:default}
+.basis{background:var(--apricot);border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.65;color:var(--brown);display:flex;flex-direction:column;gap:7px}
+.basis b{font-weight:600}
+.verifier{font-size:11.5px;color:var(--ink-2)}
+
+/* 首页 hero / 预警 / 数据格 */
+.hero{background:var(--teal-deep);border-radius:14px;padding:20px 18px 18px;color:#fff;display:flex;flex-direction:column;gap:8px}
+.hero .lbl{display:flex;justify-content:space-between;align-items:center}
+.hero .lbl span:first-child{font-size:11px;letter-spacing:.3em;color:rgba(255,255,255,.72)}
+.hero .tag{color:#F6E8D9;border:1px solid rgba(246,232,217,.55);background:transparent}
+.hero .ttl{font-family:var(--serif);font-size:21px;font-weight:700;margin:0}
+.hero .when{font-size:15px;font-variant-numeric:tabular-nums}
+.hero .src{font-size:11.5px;color:rgba(255,255,255,.6)}
+.hero .go{height:46px;border-radius:9px;border:none;background:#FFF;color:var(--teal-deep);font-size:15px;font-weight:600;cursor:pointer}
+.alertcard{border-left:3px solid var(--teal-deep)}
+.alertcard .cap{font-size:11px;letter-spacing:.2em;color:var(--teal-deep);font-weight:600}
+.alertcard .txt{font-size:13.5px;line-height:1.7}
+.today{display:flex;gap:24px;padding:2px 4px}
+.today .v{font-family:var(--serif);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.today .v .of{color:var(--ink-2);font-weight:400}
+.today .k{font-size:11px;color:var(--ink-2);letter-spacing:.1em}
+
+/* 记录页 */
+.voicebtn{height:64px;border-radius:14px;border:2px dashed var(--teal);background:#fff;color:var(--teal);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;padding:0 12px;text-align:center}
+.voicebtn.rec{border-style:solid;background:var(--teal);color:#fff}
+.voicebtn .mic{width:20px;height:20px;flex-shrink:0}
+.wave{display:none;gap:3px;align-items:center}
+.voicebtn.rec .wave{display:flex}
+.wave i{width:3px;background:#fff;border-radius:2px;animation:wv .9s ease-in-out infinite}
+.wave i:nth-child(1){height:8px}.wave i:nth-child(2){height:16px;animation-delay:.15s}.wave i:nth-child(3){height:11px;animation-delay:.3s}.wave i:nth-child(4){height:14px;animation-delay:.45s}
+@keyframes wv{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.field{background:#fff;border:1px solid var(--hair);border-radius:9px;padding:12px;font-size:15px;width:100%;resize:vertical;min-height:64px;font-family:inherit;color:var(--ink)}
+.errmsg{font-size:12.5px;color:var(--seal);display:none}
+.errmsg.show{display:block}
+.painrow{display:flex;flex-wrap:wrap;gap:8px}
+.painrow button{width:44px;height:44px;border-radius:9px;border:1.5px solid var(--hair);background:#fff;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink);cursor:pointer}
+.painrow button:hover{border-color:var(--teal);color:var(--teal)}
+.bprow{display:flex;gap:8px;align-items:center}
+.bprow input{width:90px;height:48px;border-radius:9px;border:1.5px solid var(--hair);background:#fff;font-size:16px;font-variant-numeric:tabular-nums;text-align:center;font-family:inherit}
+.bprow .x{color:var(--ink-2)}
+.bprow .btn{width:auto;padding:0 18px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:#fff;border:1px solid var(--hair);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:6px}
+.item .meta{font-size:11.5px;color:var(--ink-2);display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-variant-numeric:tabular-nums}
+.item .txt{font-size:14.5px;line-height:1.7}
+.item.serifq .txt{font-family:var(--serif);font-size:15.5px}
+.item.enter{animation:riseIn 220ms ease-out both}
+@keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.chip{font-size:10.5px;color:var(--brown);background:var(--apricot);border-radius:5px;padding:2px 8px}
+.chip.teal{color:var(--teal);background:var(--teal-tint)}
+.warmnote{background:var(--apricot);border-radius:12px;padding:13px 15px;font-size:12.5px;line-height:1.8;color:var(--brown)}
+.warmnote b{font-weight:600}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters button{font-size:12.5px;border:1.5px solid var(--hair);background:#fff;color:var(--ink-2);border-radius:16px;padding:6px 14px;cursor:pointer}
+.filters button.on{border-color:var(--teal);color:var(--teal);font-weight:600}
+
+/* 问题整理 */
+.quote{background:#fff;border:1px solid var(--hair);border-radius:12px;display:flex;overflow:hidden}
+.quote .bar{width:4px;background:var(--brown);flex-shrink:0}
+.qbody{padding:14px 15px;display:flex;flex-direction:column;gap:5px;flex:1}
+.qbody .cap{font-size:11px;letter-spacing:.2em;color:var(--brown)}
+.qbody .txt{font-family:var(--serif);font-size:16.5px;line-height:1.75}
+.aiblock{background:var(--teal-tint);border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;gap:7px}
+.aiblock .cap{font-size:11px;letter-spacing:.2em;color:var(--teal);font-weight:600}
+.aiblock .txt{font-size:14.5px;line-height:1.75}
+.judge-note{font-size:12.5px;color:var(--ink-2);line-height:1.75;margin:0}
+.tpl details{background:#fff;border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.tpl summary{padding:13px 15px;font-size:14px;font-weight:600;cursor:pointer;list-style:none}
+.tpl summary::-webkit-details-marker{display:none}
+.tpl summary::after{content:" 展开 ▾";color:var(--teal);font-size:12.5px;font-weight:400}
+.tpl details[open] summary::after{content:" 收起 ▴"}
+.tpl .inner{padding:0 15px 14px;display:flex;flex-direction:column;gap:10px}
+.tpl .q{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13.5px;line-height:1.6}
+.tpl .add{flex-shrink:0;font-size:12px;color:var(--teal);border:1px solid var(--teal);border-radius:6px;background:#fff;padding:5px 10px;cursor:pointer}
+.tpl .add:disabled{border-color:var(--hair);color:var(--ink-2);cursor:default}
+
+/* 概览 + 选择（S07a） */
+.stats{display:flex;gap:10px}
+.stat{flex:1;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:12px;text-align:center}
+.stat .n{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--teal);font-variant-numeric:tabular-nums}
+.stat .k{font-size:11px;color:var(--ink-2);letter-spacing:.06em}
+.selrow{display:flex;align-items:flex-start;gap:10px;padding:11px 2px;border-bottom:1px solid var(--hair)}
+.selrow:last-child{border-bottom:none}
+.selrow input{width:24px;height:24px;accent-color:var(--teal);flex-shrink:0;margin-top:3px}
+.selrow .t{flex:1;font-size:14px;line-height:1.6}
+.selrow .t small{display:block;font-size:11.5px;color:var(--ink-2);margin-top:2px}
+.selrow.private{background:var(--apricot);border-radius:9px;border-bottom:none;padding:11px 10px;margin-top:4px}
+.selrow.private .t{color:var(--brown)}
+.newrec{background:#FBF1EE;border:1px solid #E8CFC5;border-radius:9px;padding:11px 12px;font-size:12.5px;color:#8A4A3B;line-height:1.7;display:flex;flex-direction:column;gap:8px}
+.newrec .acts{display:flex;gap:8px}
+.newrec .acts button{flex:1;height:38px;border-radius:7px;border:1.5px solid #C99A8C;background:#fff;color:#8A4A3B;font-size:12.5px;cursor:pointer}
+
+/* 摘要核对（S07b）与沟通卡 */
+.sheet{background:#fff;border-radius:12px;box-shadow:0 1px 0 var(--hair);padding:20px 18px 16px}
+.sheet .sec{padding:13px 0 5px;border-bottom:1px solid var(--hair)}
+.sheet .sec:last-of-type{border-bottom:none}
+.sheet h4{font-family:var(--serif);font-size:14px;margin:0 0 8px;letter-spacing:.06em}
+.sheet ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+.sheet li{font-size:14px;line-height:1.7;padding-left:22px;position:relative;font-variant-numeric:tabular-nums}
+.sheet li::before{content:attr(data-no);position:absolute;left:0;top:2px;font-family:var(--serif);color:var(--teal);font-size:12.5px}
+.sheet li .src{display:block;color:var(--ink-2);font-size:12px;margin-top:2px;line-height:1.65}
+.sheet li .src::before{content:"└ ";color:var(--brown)}
+.sheet li.wrong{background:#FBF1EE;border-radius:6px}
+.sheet li.fixedt{background:#EEF6EF;border-radius:6px}
+.sheet li.removed{background:#F4F2EC;border-radius:6px;color:var(--ink-2);text-decoration:line-through}
+.qline .acts{display:flex;gap:10px;margin-top:6px}
+.qline .acts button{font-size:12px;color:var(--teal);background:none;border:none;cursor:pointer;padding:0;font-weight:600}
+.cert{font-size:10.5px;color:var(--ink-2);text-align:center;margin:12px 0 0;letter-spacing:.14em}
+.stamp{font-family:var(--serif);font-size:10.5px;color:var(--seal);border:1.5px solid var(--seal);border-radius:4px;padding:3px 8px;letter-spacing:.18em;transform:rotate(-4deg);opacity:.9;white-space:nowrap}
+
+/* 诊室模式 */
+.screens.clinic .pt{font-size:28px}
+.screens.clinic .sheet li{font-size:17.5px}
+.screens.clinic .sheet h4{font-size:17px}
+.screens.clinic .sheet li .src{font-size:14px}
+.qitem{display:none;align-items:flex-start;gap:10px}
+.screens.clinic .qitem{display:flex}
+.qitem input{width:26px;height:26px;accent-color:var(--teal);flex-shrink:0;margin-top:3px}
+.qitem span{flex:1;font-size:14px;line-height:1.7}
+.qitem.done span{text-decoration:line-through;color:var(--ink-2)}
+.qitem.done span::after{content:" 已问过 ✓";color:var(--teal);font-size:12px;text-decoration:none;font-weight:600}
+
+/* 底部导航 */
+.nav{flex-shrink:0;padding:10px 16px 18px}
+.nav .bar{background:#fff;border-radius:22px;display:flex;padding:5px;box-shadow:0 6px 20px rgba(28,43,51,.1)}
+.nav a{flex:1;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 7px;border-radius:17px;font-size:11.5px;letter-spacing:.18em;color:var(--ink-2)}
+.nav a svg{width:19px;height:19px;display:block}
+.nav a.on{background:var(--teal-deep);color:#fff}
+.nav a.on svg *{stroke:#fff!important}
+.phone.hide-nav .nav{display:none}
+
+/* 通知 / Toast / 弹窗 */
+.notif{position:absolute;top:8px;left:12px;right:12px;background:rgba(255,255,255,.97);border:1px solid var(--hair);border-radius:16px;box-shadow:0 8px 30px rgba(28,43,51,.15);padding:12px 14px;transform:translateY(-130%);transition:transform 300ms ease-out;z-index:40;display:flex;flex-direction:column;gap:6px}
+.notif.show{transform:none}
+.notif .nhead{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-2)}
+.notif .badge{font-size:11px;background:var(--apricot);color:var(--brown);border-radius:6px;padding:2px 8px}
+.notif .ntxt{font-size:14px;line-height:1.5}
+.toast{position:absolute;left:50%;bottom:110px;transform:translate(-50%,20px);background:#1C2B33;color:#fff;font-size:14px;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity 200ms ease-out,transform 200ms ease-out;z-index:50;max-width:300px;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:absolute;inset:0;background:rgba(28,43,51,.45);display:none;align-items:flex-end;z-index:60}
+.modal.open{display:flex}
+.sheet-modal{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:20px 16px 28px;display:flex;flex-direction:column;gap:12px}
+.sheet-modal h3{margin:0;font-size:17px;font-family:var(--serif)}
+.sheet-modal p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.histlist{display:flex;flex-direction:column;gap:8px}
+.histlist .h{background:#F7F5F0;border-radius:9px;padding:10px 12px;font-size:13px;line-height:1.6}
+.histlist .h b{font-family:var(--serif)}
+
+/* 周期创建 */
+.cycleform{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap}
+.pillrow button{flex:1;min-width:100px;height:52px;border-radius:10px;border:1.5px solid var(--hair);background:#fff;font-size:14.5px;color:var(--ink-2);cursor:pointer}
+.pillrow button.on{border-color:var(--teal);color:var(--teal);background:var(--teal-tint);font-weight:600}
+.flab{font-size:12px;letter-spacing:.14em;color:var(--ink-2)}
+.finput{height:48px;border-radius:9px;border:1.5px solid var(--hair);background:#fff;font-size:15px;padding:0 12px;font-family:inherit;color:var(--ink)}
+.finput::placeholder{color:#A9B0B5}
+
+/* 归档态 */
+.phone.archived .card,.phone.archived .hero,.phone.archived .sheet,.phone.archived .tcard{filter:grayscale(1);opacity:.55}
+.archived-banner{display:none;background:#F1EFEA;border-radius:12px;padding:16px;flex-direction:column;gap:6px;border:1px solid var(--hair)}
+.phone.archived .archived-banner{display:flex}
+.archived-banner .t{font-size:16px;font-weight:600;font-family:var(--serif)}
+.archived-banner .d{font-size:12.5px;color:var(--ink-2);line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="demobar">
+  <h1>诊后助手 · 需求确定版 v1.0 — 双周期演示（骨科术后 · 高血压复诊 ｜ 全部合成数据）</h1>
+  <button class="demo-btn" id="btn-switch">切换周期：骨科 ↔ 高血压</button>
+  <button class="demo-btn" id="btn-notif">模拟：拆线提醒到达</button>
+  <button class="demo-btn warn" id="btn-reset">重置演示</button>
+  <p class="note">全部数据为虚构合成 ｜ 语音、提醒均为演示模拟，示例号码不可拨号 ｜ 主体开发：WorkBuddy ｜ 依据《三模块详细产品设计与双场景演示 v1.0》</p>
+</div>
+
+<div class="stage">
+<div class="phone" id="phone">
+
+  <div class="statusbar"><span>9:41</span><span class="sim" id="sim-label">合成演示 · 周建国</span><span>5G</span></div>
+
+  <div class="screens">
+
+    <!-- S0 建立周期 -->
+    <section class="screen" id="s-cycle">
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px">第一步 · 只管理一段诊后时间</p>
+        <h2 class="pt">建立本轮周期</h2>
+        <p class="sub">不要求填写疾病资料即可开始</p>
+      </div>
+      <div class="cycleform">
+        <div>
+          <p class="flab" style="margin:0 0 8px">这轮是什么情形？</p>
+          <div class="pillrow" id="pill-type">
+            <button class="on" data-type="术后出院">术后出院</button>
+            <button data-type="门诊复诊">门诊复诊</button>
+            <button data-type="其他">其他</button>
+          </div>
+        </div>
+        <div>
+          <p class="flab" style="margin:0 0 8px">出院／就诊日期</p>
+          <input class="finput" id="cyc-start" value="11 月 5 日" placeholder="例如 11 月 5 日">
+        </div>
+        <div>
+          <p class="flab" style="margin:0 0 8px">下次复诊日期（可以暂不确定）</p>
+          <input class="finput" id="cyc-review" placeholder="不确定就先留空" value="">
+        </div>
+      </div>
+      <p class="footnote">复诊日期不确定不影响使用；确定后会用来组织「下一件事」。</p>
+      <button class="btn b1" id="btn-create-cycle">建立周期，开始导入医嘱</button>
+    </section>
+
+    <!-- S02 导入与核对 -->
+    <section class="screen" id="s-check">
+      <button class="link" data-go="home">← 返回</button>
+      <div class="row">
+        <div>
+          <p class="eyebrow" style="margin:0 0 6px" id="check-eyebrow">踝关节骨折术后 · 出院第 12 天</p>
+          <h2 class="pt">核对出院安排</h2>
+          <p class="sub">核对的是文字是否忠实，不等于已完成治疗</p>
+        </div>
+        <span class="tag warm" id="check-role">周雯 代记</span>
+      </div>
+      <div class="srccard">
+        <span class="cap">出 院 小 结 · 合 成 材 料</span>
+        <span class="txt" id="src-text">1 药物：利伐沙班片 10mg，每日一次，共 35 天（注意牙龈出血、皮肤瘀斑等出血倾向）；洛索洛芬钠片 60mg，疼痛时服用，每日不超过 3 次。2 复查：11 月 19 日（周四）骨科门诊拆线、复查 X 光，请携带出院小结。术后 14 天内患肢严格不负重。3 康复：拄双拐行走；休息时抬高患肢；伤口 48 小时后可淋浴，拆线前保持伤口干燥；禁止热水泡脚。4 预警：伤口红肿、渗液、裂开，或发热超过 38.5℃，或小腿肿痛加重、胸闷气促——立即就诊。</span>
+      </div>
+      <div id="card-stack" style="display:flex;flex-direction:column;gap:16px"></div>
+      <p class="footnote" id="check-progress"></p>
+      <button class="btn b1" id="enter-home" disabled>进入首页</button>
+    </section>
+
+    <!-- S01 首页 -->
+    <section class="screen" id="s-home">
+      <div class="cyclebar"><span id="cycle-label">本轮：术后出院 · 11 月 5 日出院 → 复诊日期待核对</span><span class="who" id="role-badge">操作人：周雯（女儿 · 代记）</span></div>
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px" id="home-eyebrow">踝关节骨折术后 · 拆线前 2 天</p>
+        <h2 class="pt">当前安排</h2>
+      </div>
+      <div id="home-alert"></div>
+      <div id="home-hero"></div>
+      <button class="btn b2" data-go="record">＋ 记一件事</button>
+      <div class="card">
+        <div class="row"><span style="font-size:16px;font-weight:600;font-family:var(--serif)">复诊时想问 · <span id="q-count">0</span> 项</span></div>
+        <div style="font-size:12.5px;color:var(--ink-2)" id="q-preview"></div>
+        <button class="link" style="text-align:right;width:100%" data-go="clarity">查看 →</button>
+      </div>
+      <div class="today" id="home-stats"></div>
+      <p class="footnote">只按你核对过、主动开启的事项提醒（演示为模拟提醒）。</p>
+    </section>
+
+    <!-- S03 行动卡详情 -->
+    <section class="screen" id="s-detail">
+      <button class="link" id="detail-back">← 返回安排</button>
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px" id="detail-eyebrow">行动卡详情</p>
+        <h2 class="pt" id="detail-title">复查安排</h2>
+        <p class="sub" id="detail-sub"></p>
+      </div>
+      <div class="quote"><span class="bar"></span><div class="qbody">
+        <span class="cap" id="detail-srccap">医 嘱 原 文</span>
+        <span class="txt" id="detail-src"></span>
+      </div></div>
+      <div class="card" id="detail-fields" style="gap:10px"></div>
+      <div class="card" style="gap:10px">
+        <span style="font-size:14px;font-weight:600">行为记录（记录 ≠ 判断依从性）</span>
+        <span class="footnote" id="detail-log"></span>
+        <button class="btn b2" id="btn-action">记下本次已执行</button>
+      </div>
+      <div class="card" style="gap:10px">
+        <span style="font-size:14px;font-weight:600">提醒（演示为模拟）</span>
+        <span class="footnote" id="detail-remind">未启用。只有核对过、日期确定的安排才能开启。</span>
+        <button class="btn b2" id="btn-remind">开启提醒（模拟）</button>
+      </div>
+      <p class="footnote">修改记录中的日期不会改动医院安排；推迟提醒不代表修改医嘱。</p>
+    </section>
+
+    <!-- S04 记一件事 -->
+    <section class="screen" id="s-record">
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px" id="rec-eyebrow">踝关节骨折术后</p>
+        <h2 class="pt">记一件事</h2>
+        <p class="sub">先保存原话，去向稍后再选</p>
+      </div>
+      <button class="voicebtn" id="voice-btn">
+        <svg class="mic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="3" width="6" height="11" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span id="voice-label">按一下，用说话记一件事（演示模拟）</span>
+        <span class="wave"><i></i><i></i><i></i><i></i></span>
+      </button>
+      <div class="divider"></div>
+      <span style="font-size:14px;font-weight:600">或打字记录</span>
+      <textarea class="field" id="record-input" rows="2" placeholder="想说什么直接写…"></textarea>
+      <span class="errmsg" id="record-err">还没有内容，先写一句再保存。</span>
+      <button class="btn b1" id="btn-save-record">保存原话</button>
+      <div class="divider"></div>
+      <div id="tpl-block"></div>
+      <div class="divider"></div>
+      <div class="row"><span style="font-size:14px;font-weight:600">记录与待问清单</span>
+        <div class="filters" id="filters">
+          <button class="on" data-f="all">全部</button>
+          <button data-f="q">待问</button>
+          <button data-f="self">仅自己</button>
+        </div>
+      </div>
+      <div class="list" id="record-list"></div>
+      <p class="warmnote"><b>仅自己保存的记录不会进入任何对外摘要。</b>保存原话后，可选去向：加入复诊待问 / 查看渠道 / 仅自己保存。</p>
+      <button class="link center" data-go="clarity">出院前值得问医生的问题模板 →</button>
+    </section>
+
+    <!-- S05 疑问与 AI 整理 -->
+    <section class="screen" id="s-clarity">
+      <button class="link" data-go="record">← 返回记录</button>
+      <div>
+        <h2 class="pt">把问题说清楚</h2>
+        <p class="sub">AI 只整理表达；医疗判断全部留给医生</p>
+      </div>
+      <div class="quote"><span class="bar"></span><div class="qbody">
+        <span class="cap" id="cl-cap">你 的 原 话 · 语音 · 11 月 16 日</span>
+        <span class="txt" id="cl-quote">「昨晚伤口跳着疼，睡不踏实。」</span>
+      </div></div>
+      <p class="judge-note">「是否正常」属于个人医学判断，本工具不解答，只帮你问清楚：</p>
+      <div class="aiblock">
+        <span class="cap">AI 整理草稿 · 尚待您核对</span>
+        <span class="txt" id="cl-draft">「昨晚曾有伤口跳痛并影响睡眠，想向医生确认如何处理。」</span>
+        <button class="btn b1" id="btn-adopt" style="margin-top:4px">采用这段表达</button>
+        <button class="btn b2" id="btn-keep">保留原话</button>
+      </div>
+      <div class="divider"></div>
+      <span style="font-size:14px;font-weight:600">能直接回答的（引用医嘱原文，仅信息整理）</span>
+      <div class="aiblock">
+        <span class="cap">问：拆线前能不能洗澡？</span>
+        <span class="txt" id="cl-answer">你的出院小结写明：「伤口 48 小时后可淋浴，但拆线前保持伤口干燥。」</span>
+        <span class="footnote" id="cl-answersrc">来源：出院小结第 3 条 · 信息整理，非医疗建议</span>
+      </div>
+      <div class="tpl">
+        <details>
+          <summary>出院前值得问医生的问题模板</summary>
+          <div class="inner" id="tpl-list"></div>
+        </details>
+      </div>
+      <div class="card">
+        <span style="font-size:14px;font-weight:600">已核实的联系方式</span>
+        <span style="font-size:13px;color:var(--ink-2)">骨科病房咨询电话 0577-XXXX-XXXX（工作日）· 来源：出院小结</span>
+        <span style="font-size:13px;color:var(--ink-2)">120 急救 · 突发严重不适时使用</span>
+        <span class="tag warm">示例号码 · 不可拨号</span>
+        <p class="footnote">本工具不是实时医疗或急救服务；突发严重不适请通过急救渠道及时求助。打开渠道不代表医生已收到。</p>
+      </div>
+    </section>
+
+    <!-- S07a 选择内容 -->
+    <section class="screen" id="s-select">
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px" id="sel-eyebrow">复诊准备 · 本轮周期</p>
+        <h2 class="pt">选择要带进诊室的内容</h2>
+        <p class="sub">私人记录默认不选；所有数字按真实记录计算</p>
+      </div>
+      <div id="stale-banner"></div>
+      <div class="stats" id="sel-stats"></div>
+      <div class="card" style="gap:2px" id="sel-list"></div>
+      <button class="btn b1" id="btn-gen">生成摘要草稿（程序汇总）</button>
+      <p class="footnote">次数与日期由程序按记录计算，AI 不猜测频率、不评价恢复情况。</p>
+      <button class="link center" id="btn-hist">查看历史周期</button>
+    </section>
+
+    <!-- S07b 逐条核对 -->
+    <section class="screen" id="s-review">
+      <button class="link" data-go="select">← 返回选择</button>
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px">摘要草稿 · 逐条核对</p>
+        <h2 class="pt">每句都能查到原话</h2>
+        <p class="sub">有出入随时改；改过之后需要重新核对</p>
+      </div>
+      <div class="banner" id="sum-status">摘要草稿 · 尚未核对</div>
+      <div class="sheet" style="box-shadow:none">
+        <div class="sec"><h4>一、已有安排及处理记录</h4><ol id="rv-sec1"></ol></div>
+        <div class="sec"><h4>二、本人或家属记录的变化</h4><ol id="rv-sec2"></ol></div>
+        <div class="sec"><h4>三、想问的问题</h4><ol id="rv-sec3"></ol></div>
+        <p class="cert">本人／家属自述 · 非医学审核</p>
+      </div>
+      <button class="btn b1" id="btn-confirm-sum">确认，生成展示版</button>
+      <p class="footnote">展示版将注明核对人、核对时间；家属核对会如实标注「家属核对」。</p>
+    </section>
+
+    <!-- S08 沟通卡 / 诊室模式 / 归档 -->
+    <section class="screen" id="s-card">
+      <div class="row" style="align-items:flex-start">
+        <div>
+          <p class="eyebrow" style="margin:0 0 6px" id="card-eyebrow">复诊沟通卡 · 给医生看</p>
+          <h2 class="pt" id="card-title">周建国 · 踝骨骨折术后</h2>
+          <p class="sub" id="card-cycle">本轮 11 月 5 日 — 11 月 19 日</p>
+        </div>
+        <span class="stamp" id="card-stamp">本人已核对</span>
+      </div>
+      <div class="archived-banner">
+        <span class="t">本轮已归档</span>
+        <span class="d" id="arch-note">本轮软件提醒已全部停止；历史只读。新的医嘱属于新周期，不会自动继承旧安排。演示完成——可用顶部「重置演示」重新开始。</span>
+        <button class="btn b2" id="btn-newcycle" style="height:40px;font-size:13.5px">开新周期（导入新的医嘱材料）</button>
+      </div>
+      <div class="sheet">
+        <div class="sec"><h4>一、已有安排及处理记录</h4><ol id="cd-sec1"></ol></div>
+        <div class="sec"><h4>二、本人或家属记录的变化</h4><ol id="cd-sec2"></ol></div>
+        <div class="sec"><h4>三、想问的问题</h4><div id="cd-sec3" style="display:flex;flex-direction:column;gap:8px"></div></div>
+        <p class="cert" id="cd-cert">本人／家属自述 · 非医学审核</p>
+      </div>
+      <button class="btn b2" id="clinic-toggle">开启诊室模式（字号放大 · 问题逐条勾选）</button>
+      <button class="btn b1" id="btn-archive">结束本轮并归档</button>
+      <button class="btn b2" data-go="review">返回修改</button>
+      <p class="footnote">归档将停止本轮全部软件提醒，不表示治疗结束，不取消医院预约。</p>
+    </section>
+
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="nav" id="nav"><div class="bar">
+    <a class="tab on" data-tab="home" href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="16" height="14" stroke="#5B6B75" stroke-width="1.8"/><path d="M4 11h16M9 3v4M15 3v4" stroke="#5B6B75" stroke-width="1.8"/><path d="M8.5 16l2.2 2.2L15.5 13.5" stroke="#5B6B75" stroke-width="1.8"/></svg>安排</a>
+    <a class="tab" data-tab="record" href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 19.5h4L19.5 9a2.7 2.7 0 0 0-3.8-3.8L5 15.7l-.2 3.8z" stroke="#5B6B75" stroke-width="1.8" stroke-linejoin="miter"/><path d="M13.5 7l3.5 3.5" stroke="#5B6B75" stroke-width="1.8"/></svg>记录</a>
+    <a class="tab" data-tab="select" href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.5 12a7.5 7.5 0 1 1-2.1-5.2" stroke="#5B6B75" stroke-width="1.8"/><path d="M19.5 3.8v3.6h-3.6" stroke="#5B6B75" stroke-width="1.8"/></svg>复诊</a>
+  </div></nav>
+
+  <!-- 模拟通知 -->
+  <div class="notif" id="notif">
+    <div class="nhead"><span>现在 · 诊后助手</span><span class="badge">模拟提醒</span></div>
+    <span class="ntxt" id="notif-txt">你核对过的拆线复查就在明天，查看时间与携带物品。</span>
+    <button class="link" id="notif-open">查看</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 归档确认 -->
+  <div class="modal" id="modal">
+    <div class="sheet-modal">
+      <h3>结束本轮前确认</h3>
+      <p>本轮软件提醒（模拟）将全部停止；归档不表示治疗结束，不影响医院预约。历史周期保留只读可查。新安排从新周期开始，旧医嘱不自动延续。</p>
+      <button class="btn b1" id="btn-arch-yes">归档并停止本轮提醒</button>
+      <button class="btn b2" id="btn-arch-no">返回检查</button>
+    </div>
+  </div>
+
+  <!-- 历史周期 -->
+  <div class="modal" id="hist-modal">
+    <div class="sheet-modal">
+      <h3>历史周期（只读）</h3>
+      <div class="histlist" id="hist-list"></div>
+      <button class="btn b2" id="btn-hist-close">关闭</button>
+    </div>
+  </div>
+
+</div>
+</div>
+<script>
+(function(){
+"use strict";
+var phone = document.getElementById("phone");
+var screensEl = document.querySelector(".screens");
+var active = "ortho";
+var currentFilter = "all";
+
+/* ================= 双周期数据（全部合成） ================= */
+function freshOrtho(){
+  return {
+    key:"ortho", person:"周建国", simTag:"周建国", role:"周雯（女儿 · 代记）", roleShort:"周雯 代记",
+    eyebrow:"踝关节骨折术后 · 拆线前 2 天（11 月 17 日）",
+    checkEyebrow:"踝关节骨折术后 · 出院第 12 天",
+    cycleLabel:"本轮：术后出院 · 11 月 5 日出院 → 11 月 19 日拆线复查",
+    srcText:"1 药物：利伐沙班片 10mg，每日一次，共 35 天（注意牙龈出血、皮肤瘀斑等出血倾向）；洛索洛芬钠片 60mg，疼痛时服用，每日不超过 3 次。2 复查：11 月 19 日（周四）骨科门诊拆线、复查 X 光，请携带出院小结。术后 14 天内患肢严格不负重。3 康复：拄双拐行走；休息时抬高患肢；伤口 48 小时后可淋浴，拆线前保持伤口干燥；禁止热水泡脚。4 预警：伤口红肿、渗液、裂开，或发热超过 38.5℃，或小腿肿痛加重、胸闷气促——立即就诊。",
+    cards:[
+      {key:"drug", name:"① 用药", tag:"2 项", verified:false, verifier:null,
+       lines:["利伐沙班片 10mg · 每日一次 · 共 35 天（注意出血倾向）","洛索洛芬钠片 60mg · 疼痛时服用 · 每日不超过 3 次"]},
+      {key:"review", name:"② 复查", tag:"拆线 · X 光", verified:false, verifier:null, hasDate:true,
+       lines:["11 月 19 日 · 骨科门诊 3 号楼 2 层","拆线、复查 X 光 · 携带出院小结"]},
+      {key:"rehab", name:"③ 康复与禁忌", tag:"4 项", verified:false, verifier:null, basis:true,
+       lines:["拄双拐行走，患肢不负重","休息时抬高患肢","伤口 48 小时后可淋浴，拆线前保持干燥","禁止热水泡脚"]},
+      {key:"alert", name:"④ 就医提示", tag:"医生原文", verified:false, verifier:null,
+       lines:["伤口红肿、渗液、裂开 → 立即就诊","发热超过 38.5℃ → 立即就诊","小腿肿痛加重、胸闷气促 → 立即就诊"]}
+    ],
+    alert:{cap:"就 医 提 示", txt:"伤口红肿渗液裂开／发热超 38.5℃／小腿肿痛加重、胸闷气促——立即就诊。", src:"来源：出院小结第 4 条 · 逐字复现"},
+    hero:{ttl:"明日拆线复查", when:"11 月 19 日 · 骨科门诊 3 号楼 2 层", src:"携带：出院小结 · 拄双拐出行", detail:"review"},
+    medLogs:12, medPlan:12, painN:5, painText:"评分 7 · 6 · 6 · 5 · 6（夜间为主）", painDays:"6、8、11、14、16 日",
+    stats:[["12","/12","抗凝药已记录"],["5","/12","疼痛记录（次）"]],
+    tplTitle:"疼痛评分（0-10）", tplType:"pain",
+    records:[
+      {type:"quote", meta:"语音 · 11 月 16 日 21:40", chips:["待问"], txt:"「昨晚伤口跳着疼，睡不踏实。」", priv:false},
+      {type:"priv", meta:"周雯 代记 · 11 月 15 日", chips:["私人 · 默认不外发"], txt:"「爸这两天脾气有点急，夜里翻来覆去。」", priv:true},
+      {type:"pain", meta:"疼痛评分 · 11 月 6、8、11、14、16 日", chips:["5 次"], txt:"评分 7 · 6 · 6 · 5 · 6（夜间为主）", priv:false}
+    ],
+    questions:["复诊是否要重新挂号，还是找主管医生？"],
+    clQuote:"「昨晚伤口跳着疼，睡不踏实。」", clCap:"你 的 原 话 · 语音 · 11 月 16 日",
+    clDraft:"「昨晚曾有伤口跳痛并影响睡眠，想向医生确认如何处理。」",
+    clQ:"拆线前能不能洗澡？", clA:"你的出院小结写明：「伤口 48 小时后可淋浴，但拆线前保持伤口干燥。」", clAsrc:"来源：出院小结第 3 条 · 信息整理，非医疗建议",
+    voiceQuote:"「昨晚伤口跳着疼，睡不踏实。」",
+    selA:"用药执行 12 次本人记录 · 复查资料已准备", selAsub:"ActionLog · 程序汇总",
+    newCount:0
+  };
+}
+function freshHyper(){
+  return {
+    key:"hyper", person:"陈淑兰", simTag:"陈淑兰", role:"陈淑兰（本人）", roleShort:"本人操作",
+    eyebrow:"高血压随访 · 复诊前 2 天（11 月 14 日）",
+    checkEyebrow:"高血压随访 · 就诊后第 12 天",
+    cycleLabel:"本轮：门诊复诊 · 11 月 2 日就诊 → 11 月 16 日复诊",
+    srcText:"1 药物治疗：苯磺酸氨氯地平片 5mg，每日 1 次，晨起服用。2 家庭血压监测：每日早晚各测 1 次，记录数值，复诊时带来。3 生活方式：低盐饮食，适当活动。4 复诊：两周后（11 月 16 日）全科门诊复诊，复查血压控制情况，请携带家庭血压记录。5 如出现明显头晕、胸闷等不适，请及时就诊。",
+    cards:[
+      {key:"drug", name:"① 用药", tag:"1 项", verified:true, verifier:"陈淑兰 本人核对",
+       lines:["苯磺酸氨氯地平片 5mg · 每日 1 次 · 晨起服用"]},
+      {key:"monitor", name:"② 其他安排 · 血压监测", tag:"医嘱相关", verified:true, verifier:"陈淑兰 本人核对", hasDate:false,
+       lines:["每日早晚各测 1 次 · 记录数值","监测计划与「记录」页的血压模板联动"]},
+      {key:"review", name:"③ 复查", tag:"复诊", verified:true, verifier:"陈淑兰 本人核对", hasDate:true,
+       lines:["11 月 16 日 · 全科门诊（时间待确认）","复查血压控制情况 · 携带家庭血压记录"]}
+    ],
+    alert:{cap:"就 医 提 示", txt:"如出现明显头晕、胸闷等不适，请及时就诊。", src:"来源：门诊说明第 5 条 · 逐字复现"},
+    hero:{ttl:"复诊 · 全科门诊", when:"11 月 16 日 · 具体时间待确认", src:"携带：家庭血压记录", detail:"review"},
+    medLogs:12, medPlan:12, bpN:4,
+    stats:[["4","/12","血压记录（次）"],["12","/12","服药已记录"]],
+    tplTitle:"血压记录（收缩压／舒张压 mmHg）", tplType:"bp",
+    records:[
+      {type:"bp", meta:"血压 · 11 月 3 日", chips:[], txt:"132 / 78 mmHg", priv:false},
+      {type:"bp", meta:"血压 · 11 月 5 日", chips:[], txt:"138 / 82 mmHg", priv:false},
+      {type:"bp", meta:"血压 · 11 月 8 日", chips:[], txt:"129 / 76 mmHg", priv:false},
+      {type:"bp", meta:"血压 · 11 月 10 日", chips:[], txt:"134 / 80 mmHg", priv:false},
+      {type:"quote", meta:"文字 · 11 月 5 日 20:12", chips:["待问"], txt:"「今天吃完药有点晕乎，是不是药不对。」", priv:false},
+      {type:"priv", meta:"本人 · 11 月 7 日", chips:["私人 · 默认不外发"], txt:"「老伴说我脾气变急了，有点担心。」", priv:true}
+    ],
+    questions:["复诊是否要重新挂号？","服药后头晕是否与用药有关？"],
+    clQuote:"「今天吃完药有点晕乎，是不是药不对。」", clCap:"你 的 原 话 · 11 月 5 日",
+    clDraft:"「服药第 3 天出现过一次轻微头晕，想确认是否与用药有关、需要怎么处理。」",
+    clQ:"复诊需要带什么材料？", clA:"你的门诊说明写明：「复诊请携带家庭血压记录。」", clAsrc:"来源：门诊说明第 4 条 · 信息整理，非医疗建议",
+    voiceQuote:"「今天有点头晕，想问问医生。」",
+    selA:"服药执行 12 次本人记录 · 血压记录 4 次", selAsub:"ActionLog · 程序汇总",
+    newCount:0
+  };
+}
+var SC = { ortho:freshOrtho(), hyper:freshHyper() };
+var UI = { current:"cycle", detailKey:null, confirmed:false, stale:false, fixed1:false, fixed2:false, clinicOn:false, filter:"all" };
+
+/* ================= 工具 ================= */
+function $ (id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[<>&]/g, function(c){ return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]; }); }
+function D(){ return SC[active]; }
+var toastTimer=null;
+function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove("show");},2000); }
+var navNo={cycle:1,check:1,detail:1,card:1};
+var tabMap={home:"home",record:"record",clarity:"record",select:"select",review:"select"};
+function show(name){
+  UI.current=name;
+  document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+  var sec=$(  "s-"+name ); sec.classList.add("active"); sec.scrollTop=0;
+  phone.classList.toggle("hide-nav", !!navNo[name] && !D().archived);
+  document.querySelectorAll(".nav .tab").forEach(function(t){ t.classList.toggle("on", t.getAttribute("data-tab")===(tabMap[name]||null)); });
+}
+
+/* ================= 渲染 ================= */
+function renderTop(){
+  $("sim-label").textContent="合成演示 · "+D().person;
+}
+function renderCheck(){
+  var d=D();
+  $("check-eyebrow").textContent=d.checkEyebrow;
+  $("check-role").textContent=d.roleShort;
+  $("src-text").textContent=d.srcText;
+  var stack=$("card-stack"); stack.innerHTML="";
+  d.cards.forEach(function(c){
+    var el=document.createElement("div");
+    el.className="tcard card"+(c.verified?" verified":"");
+    var h='<div class="thead"><span class="tname">'+esc(c.name)+'</span><span class="tag">'+esc(c.tag)+'</span></div><ul>';
+    c.lines.forEach(function(l,i){ h+='<li data-no="'+(i+1===1?"①":i+1===2?"②":i+1===3?"③":"④")+'">'+esc(l)+'</li>'; });
+    h+='</ul>';
+    if(c.basis){
+      h+='<div class="basis"><b>日期依据待确认：「术后 14 天」</b>出院日（11 月 5 日）不等于手术日，系统不做换算、不设提醒。'+
+         '<button class="btn b2" style="height:38px;font-size:13px" data-askbasis'+(c.basisAsked?' disabled':'')+'>'+(c.basisAsked?'已记到待问 ✓':'一键记到待问（请确认手术日期）')+'</button></div>';
+    }
+    h+= c.verified
+      ? '<span class="verifier">'+esc(c.verifier)+' · '+esc(d.roleShort)+' ／ 核对 ≠ 已执行</span><button class="ok" disabled>已核对 ✓</button>'
+      : '<button class="ok" data-verify="'+c.key+'">确认这类内容</button>';
+    el.innerHTML=h;
+    var vb=el.querySelector("[data-verify]");
+    if(vb) vb.addEventListener("click", function(){
+      c.verified=true; c.verifier=(active==="ortho"?"周雯（女儿）代录 · 周雯核对":"陈淑兰 本人核对");
+      renderCheck(); renderHome(); checkDone();
+      toast("已核对内容。核对不等于事项已完成");
+    });
+    var ab=el.querySelector("[data-askbasis]");
+    if(ab && !ab.disabled) ab.addEventListener("click", function(){ ab.disabled=true; ab.textContent="已记到待问 ✓"; c.basisAsked=true; addQ("'术后 14 天'从哪天起算？请确认手术日期"); });
+    stack.appendChild(el);
+  });
+  var n=d.cards.filter(function(c){return c.verified;}).length;
+  $("check-progress").textContent="已核对 "+n+" / "+d.cards.length+" 类。四类不必全满，未核对的不会进入「下一件事」。";
+  $("enter-home").disabled=(n<d.cards.length);
+}
+function checkDone(){ if(D().cards.every(function(c){return c.verified;})) toast("内容全部核对，可进入首页"); }
+function renderHome(){
+  var d=D();
+  $("home-eyebrow").textContent=d.eyebrow;
+  $("cycle-label").textContent=d.cycleLabel;
+  $("role-badge").textContent="操作人："+d.role;
+  var al=$("home-alert");
+  if(d.alert){ al.innerHTML='<div class="card alertcard"><span class="cap">'+esc(d.alert.cap)+'</span><span class="txt">'+esc(d.alert.txt)+'</span><span class="footnote">'+esc(d.alert.src)+'</span></div>'; }
+  else al.innerHTML="";
+  var allV=d.cards.every(function(c){return c.verified;});
+  var hr=$("home-hero");
+  hr.innerHTML = allV
+    ? '<div class="hero"><div class="lbl"><span>下 一 件 事</span><span class="tag">待处理</span></div><p class="ttl">'+esc(d.hero.ttl)+'</p><p class="when">'+esc(d.hero.when)+'</p><p class="src">'+esc(d.hero.src)+'</p><button class="go" id="hero-go">查看详情</button></div>'
+    : '<div class="card"><span style="font-size:14px;color:var(--ink-2)">目前没有已核对的安排</span><button class="btn b2" data-goto="check">去核对医嘱</button></div>';
+  var hg=$("hero-go"); if(hg) hg.addEventListener("click", function(){ openDetail(d.hero.detail); });
+  var gb=hr.querySelector("[data-goto]"); if(gb) gb.addEventListener("click", function(){ show("check"); });
+  d.stats[0][0]=String(d.medLogs);
+  if(d.tplType==="pain"){ d.stats[1][0]=String(d.painN); }
+  else { d.stats[0][0]=String(d.bpN||d.stats[0][0]); }
+  $("home-stats").innerHTML=d.stats.map(function(s){ return '<div><span class="v">'+s[0]+'<span class="of">'+s[1]+'</span></span><div class="k">'+s[2]+'</div></div>'; }).join("");
+  $("q-count").textContent=d.questions.length;
+  $("q-preview").textContent=d.questions.join(" · ");
+}
+function openDetail(key){
+  var d=D(); var c=d.cards.filter(function(x){return x.key===key;})[0]; if(!c) return;
+  UI.detailKey=key;
+  $("detail-eyebrow").textContent=d.checkEyebrow;
+  $("detail-title").textContent=c.name.replace(/^[①②③④] /,"")+" · 行动卡详情";
+  $("detail-sub").textContent=(c.verified? "内容已核对（"+c.verifier+"）":"内容尚未核对");
+  $("detail-src").textContent=d.srcText.split(/[。]/).filter(function(s){return s.length>4;}).slice(0,4).join("。")+"。";
+  $("detail-fields").innerHTML=c.lines.map(function(l){ return '<div class="row"><span class="footnote">医嘱</span><span class="f-value">'+esc(l)+'</span></div>'; }).join("");
+  $("detail-log").textContent=(key==="drug") ? ("已记录执行 "+d.medLogs+" 次 · 最近：11 月 17 日 08:05 · "+(active==="ortho"?"周雯 代记":"本人")) : "尚未记录。";
+  $("btn-action").textContent=(key==="drug")?"记下本次已服用":"标记资料已准备";
+  var rl=$("detail-remind");
+  rl.textContent = (c.verified&&c.hasDate) ? "未启用。开启后为模拟提醒。" : "此卡未启用：需要先核对内容且有确定日期。";
+  $("btn-remind").disabled=!(c.verified&&c.hasDate);
+  $("btn-remind").dataset.on="0";
+  $("btn-remind").textContent="开启提醒（模拟）";
+  show("detail");
+}
+function renderRecord(){
+  var d=D();
+  $("rec-eyebrow").textContent=d.eyebrow.split(" ·")[0];
+  var tb=$("tpl-block");
+  if(d.tplType==="pain"){
+    tb.innerHTML='<span style="font-size:14px;font-weight:600">'+esc(d.tplTitle)+'</span><div class="painrow" id="painrow">'+
+      [0,1,2,3,4,5,6,7,8,9,10].map(function(n){return '<button>'+n+'</button>';}).join("")+'</div><p class="footnote">评分只做记录；不解释严重程度。</p>';
+    tb.querySelectorAll("#painrow button").forEach(function(b){ b.addEventListener("click", function(){
+      d.painN++; d.records.unshift({type:"pain",meta:"疼痛评分 · 刚刚",chips:[],txt:"评分 "+b.textContent+"（0-10）",priv:false});
+      afterNewRecord("已记录评分 "+b.textContent+"，不做任何判断"); renderRecord(); renderHome();
+    }); });
+  } else {
+    tb.innerHTML='<span style="font-size:14px;font-weight:600">'+esc(d.tplTitle)+'</span><div class="bprow"><input id="bp-sys" inputmode="numeric" placeholder="132"><span class="x">/</span><input id="bp-dia" inputmode="numeric" placeholder="78"><button class="btn b2" id="bp-save">记录</button></div><p class="footnote">按日期列出数值，不判断控制效果。</p>';
+    $("bp-save").addEventListener("click", function(){
+      var s=$("bp-sys").value.trim(), w=$("bp-dia").value.trim();
+      if(!s||!w){ toast("请填写收缩压和舒张压"); return; }
+      d.bpN=(d.bpN||0)+1;
+      d.records.unshift({type:"bp",meta:"血压 · 刚刚",chips:[],txt:s+" / "+w+" mmHg",priv:false});
+      afterNewRecord("已记录血压 "+s+"/"+w); renderRecord(); renderHome();
+    });
+  }
+  var list=$("record-list"); list.innerHTML="";
+  d.records.forEach(function(r){
+    if(UI.filter==="q" && r.chips.indexOf("待问")<0) return;
+    if(UI.filter==="self" && !r.priv) return;
+    var el=document.createElement("div");
+    el.className="item"+(r.type==="quote"?" serifq":"");
+    var chips=r.chips.map(function(c){ return '<span class="chip'+(c.indexOf("待问")>=0?" teal":"")+'">'+esc(c)+'</span>'; }).join("");
+    el.innerHTML='<span class="meta">'+esc(r.meta)+' '+chips+'</span><span class="txt">'+esc(r.txt)+'</span>';
+    list.appendChild(el);
+  });
+  document.querySelectorAll("#filters button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-f")===UI.filter); });
+}
+function addQ(q){ D().questions.push(q); renderHome(); if(UI.current==="record") renderRecord(); toast("已加入复诊待问（来源：A 模块）"); markStale(); }
+function afterNewRecord(msg){ toast(msg+"。去向默认仅记录，可在生成摘要时选择"); markStale(); }
+function markStale(){ if(UI.confirmed){ UI.stale=true; D().newCount++; } }
+
+/* 选择页 */
+function renderSelect(){
+  var d=D();
+  $("sel-eyebrow").textContent="复诊准备 · "+d.person;
+  var sb=$("stale-banner");
+  sb.innerHTML = UI.stale
+    ? '<div class="newrec"><b>有新记录未纳入（'+d.newCount+' 条）。</b>已核对版本保持不变，不会被偷偷修改。<div class="acts"><button id="keep-ver">保持当前版本</button><button id="regen">重新生成</button></div></div>'
+    : "";
+  if(UI.stale){
+    $("keep-ver").addEventListener("click", function(){ UI.stale=false; d.newCount=0; toast("保持当前已核对版本"); renderSelect(); });
+    $("regen").addEventListener("click", function(){ UI.stale=false; d.newCount=0; UI.confirmed=false; genReview(); show("review"); toast("已按最新记录重新生成草稿"); });
+  }
+  var nv=d.cards.filter(function(c){return c.verified;}).length;
+  var obs=d.records.filter(function(r){return !r.priv;}).length;
+  $("sel-stats").innerHTML=
+    '<div class="stat"><div class="n">'+nv+'/'+d.cards.length+'</div><div class="k">已核对安排</div></div>'+
+    '<div class="stat"><div class="n">'+obs+'</div><div class="k">变化记录</div></div>'+
+    '<div class="stat"><div class="n">'+d.questions.length+'</div><div class="k">待问</div></div>';
+  var rows='';
+  rows+='<div class="selrow"><input type="checkbox" checked disabled><span class="t">'+esc(d.selA)+'<small>'+esc(d.selAsub)+'</small></span></div>';
+  d.records.forEach(function(r,i){
+    if(r.priv){
+      rows+='<div class="selrow private"><input type="checkbox"><span class="t">'+esc(r.txt)+'<small>'+esc(r.meta)+' · 私人，默认不选</small></span></div>';
+    } else if(r.type==="quote"){
+      rows+='<div class="selrow"><input type="checkbox" checked><span class="t">'+esc(r.txt)+'<small>'+esc(r.meta)+'</small></span></div>';
+    } else if(r.type==="pain"){
+      rows+='<div class="selrow"><input type="checkbox" checked><span class="t">疼痛评分：'+d.painN+' 次日期明确的记录<small>程序汇总 · 仅列出，不评价严重程度</small></span></div>';
+    } else if(r.type==="bp"){
+      rows+='<div class="selrow"><input type="checkbox" checked><span class="t">血压：'+(d.bpN||4)+' 次记录（按日期列出数值）<small>程序汇总 · 不判断控制效果</small></span></div>';
+    }
+  });
+  d.questions.forEach(function(q){ rows+='<div class="selrow"><input type="checkbox" checked><span class="t">问：'+esc(q)+'<small>来源：待问清单</small></span></div>'; });
+  $("sel-list").innerHTML=rows;
+}
+/* 核对页与展示版 */
+function secLines(){
+  var d=D();
+  var s1=[ {t:(active==="ortho"?"利伐沙班已按医嘱服用并记录（"+d.medLogs+" 次本人记录）":"服药已记录 "+d.medLogs+" 次（本人记录）"), s:"来源：ActionLog · 程序汇总"},
+           {t:(active==="ortho"?"11 月 19 日拆线复查 · 骨科门诊 · 携带出院小结":"11 月 16 日复诊 · 全科门诊 · 携带家庭血压记录"), s:"来源："+(active==="ortho"?"出院小结第 2 条":"门诊说明第 4 条")} ];
+  var s2;
+  if(active==="ortho"){
+    s2=[ {id:"p", wrong:"疼痛：坚持每日记录疼痛变化", fix:"疼痛：14 天记录 "+d.painN+" 次（"+d.painDays+"），其余未记录", s:"原话对照：疼痛评分共 "+d.painN+" 条，其余日期未记录", fs:"评分记录 · 程序汇总"},
+         {id:"w", wrong:"伤口恢复良好", fix:"11 月 16 日原话：「今天感觉不太疼了」", s:"原话对照：仅有该条原话，无「恢复良好」的依据", fs:"语音原话 · 11 月 16 日", removable:true},
+         {t:"语音记录：「昨晚伤口跳着疼，睡不踏实。」（11 月 16 日）", s:"来源：本人语音原话（待问）"} ];
+  } else {
+    s2=[ {t:"血压 "+(d.bpN||4)+" 次记录：132/78、138/82、129/76、134/80 mmHg（11 月 3、5、8、10 日）", s:"来源：血压模板 · 按日期列出，不判断控制效果"},
+         {t:"语音原话：「今天吃完药有点晕乎，是不是药不对。」（11 月 5 日）", s:"来源：本人原话（待问）"} ];
+  }
+  var s3=d.questions.map(function(q,i){ return {t:(i+1)+". "+q, s:"来源：待问清单"}; });
+  return {s1:s1,s2:s2,s3:s3};
+}
+var RL=null;
+function liHtml(L,idx,sec){
+  var cls = L.wrong ? (L.state==="fixed"?"fixedt":(L.state==="removed"?"removed":"wrong")) : "";
+  var txt = L.wrong ? (L.state==="fixed"? L.fix : (L.state==="removed"? "（已从本次摘要移除）" : L.wrong)) : L.t;
+  var src = L.wrong ? (L.state==="fixed"? L.fs : L.s) : L.s;
+  var acts = L.wrong
+    ? '<div class="acts">'+(L.state!=="fixed"&&L.state!=="removed"?'<button data-fix="'+sec+idx+'">'+(L.removable?"删除这句":"按原话修正")+'</button>':"")+'<button data-src="'+sec+idx+'">查看原话</button></div>'
+    : '<div class="acts"><button data-src="'+sec+idx+'">查看原话</button></div>';
+  return '<li data-no="'+(idx+1===1?"①":idx+1===2?"②":idx+1===3?"③":"④")+'" class="qline '+cls+'">'+esc(txt)+'<span class="src" style="display:none">'+esc(src)+'</span>'+acts+'</li>';
+}
+function genReview(){ RL=secLines(); renderReview(); }
+function renderReview(){
+  var d=D();
+  $("sum-status").textContent = UI.confirmed ? (UI.stale? "已核对 · 有新记录未纳入，待重新核对" : (UI.fixed1||UI.fixed2? "本人已核对 · 已修正":"本人已核对")) : ((UI.fixed1||UI.fixed2)? "已修改 · 待重新核对":"摘要草稿 · 尚未核对");
+  $("rv-sec1").innerHTML=RL.s1.map(function(L,i){return liHtml(L,i,1);}).join("");
+  $("rv-sec2").innerHTML=RL.s2.map(function(L,i){return liHtml(L,i,2);}).join("");
+  $("rv-sec3").innerHTML=RL.s3.map(function(L,i){return liHtml(L,i,3);}).join("");
+  $("rv-sec2").querySelectorAll("[data-fix]").forEach(function(b){ b.addEventListener("click", function(){
+    var i=+b.getAttribute("data-fix").slice(1)-0, sec=b.getAttribute("data-fix").slice(0,1);
+    var L=RL["s"+sec][i]; L.state=(L.removable?"removed":"fixed");
+    if(sec==="2"){ if(L.id==="p") UI.fixed1=true; if(L.id==="w") UI.fixed2=true; }
+    renderReview(); renderCard();
+    toast(L.removable?"已删除无依据结论，需重新核对":"已按原话修正，需重新核对");
+  }); });
+  $("s-review").querySelectorAll("[data-src]").forEach(function(b){ b.addEventListener("click", function(){
+    var sp=b.closest("li").querySelector(".src"); sp.style.display=(sp.style.display==="none"?"block":"none");
+  }); });
+}
+function renderCard(){
+  var d=D();
+  $("card-eyebrow").textContent="复诊沟通卡 · 给医生看";
+  $("card-title").textContent=d.person+" · "+(active==="ortho"?"踝骨骨折术后":"高血压随访");
+  $("card-cycle").textContent=(active==="ortho"?"本轮 11 月 5 日 — 11 月 19 日":"本轮 11 月 2 日 — 11 月 16 日");
+  $("cd-sec1").innerHTML=RL.s1.map(function(L){ return liPlain(L); }).join("");
+  $("cd-sec2").innerHTML=RL.s2.map(function(L){
+    if(L.wrong){ var c=(L.state==="fixed"?L.fix:(L.state==="removed"?null:L.wrong)); return c? liPlain({t:c}) : '<li data-no="·" class="removed">（已删除：无依据结论）</li>'; }
+    return liPlain(L);
+  }).join("");
+  $("cd-sec3").innerHTML=d.questions.map(function(q){ return '<label class="qitem"><input type="checkbox"><span>'+esc(q)+'</span></label>'; }).join("");
+  $("cd-sec3").querySelectorAll("input").forEach(function(cb){ cb.addEventListener("change", function(){ cb.closest(".qitem").classList.toggle("done",cb.checked); }); });
+  var fam=(active==="ortho"&&UI.verifier!=="self");
+  $("card-stamp").textContent=fam?"家属周雯核对":"本人已核对";
+  $("cd-cert").textContent=(fam?"家属代记 · 家属核对":"本人自述")+" · 非医学审核 · "+d.role;
+}
+function liPlain(L){ return '<li data-no="'+(L.no||"·")+'">'+esc(L.t)+'<span class="src">'+esc(L.s||"来源：用户核对版")+'</span></li>'; }
+
+/* ================= 事件 ================= */
+document.querySelectorAll("[data-go]").forEach(function(el){ el.addEventListener("click", function(){ show(el.getAttribute("data-go")); }); });
+document.querySelectorAll(".nav .tab").forEach(function(t){ t.addEventListener("click", function(){
+  UI.filter="all"; show(t.getAttribute("data-tab")); if(t.getAttribute("data-tab")==="record") renderRecord(); if(t.getAttribute("data-tab")==="select") renderSelect();
+}); });
+$("detail-back").addEventListener("click", function(){ show("home"); });
+$("btn-action").addEventListener("click", function(){
+  var d=D();
+  if(UI.detailKey==="drug"){ d.medLogs++; $("detail-log").textContent="已记录执行 "+d.medLogs+" 次 · 刚刚 · "+(active==="ortho"?"周雯 代记":"本人"); }
+  else { $("detail-log").textContent="资料已准备 · 刚刚 · "+(active==="ortho"?"周雯 代记":"本人"); }
+  renderHome(); afterNewRecord("已记录执行（不判断依从性）");
+});
+$("btn-remind").addEventListener("click", function(){
+  var b=$("btn-remind");
+  b.dataset.on=(b.dataset.on==="1"?"0":"1");
+  if(b.dataset.on==="1"){ b.textContent="已启用（模拟提醒）· 点此关闭"; $("detail-remind").textContent="已启用模拟提醒；浏览器关闭后不保证到达。"; }
+  else { b.textContent="开启提醒（模拟）"; $("detail-remind").textContent="未启用。开启后为模拟提醒。"; }
+});
+$("pill-type").querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){
+  $("pill-type").querySelectorAll("button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+}); });
+$("btn-create-cycle").addEventListener("click", function(){
+  var v=$("cyc-review").value.trim();
+  D().cycleLabel="本轮：术后出院 · 11 月 5 日出院 → "+(v? "复诊 "+v+"（手工填写）":"复诊日期待核对");
+  show("check"); toast("周期已建立；复诊日期不确定不影响使用");
+});
+$("enter-home").addEventListener("click", function(){ renderHome(); show("home"); });
+
+/* 语音（演示模拟） */
+var voiceBusy=false;
+$("voice-btn").addEventListener("click", function(){
+  if(voiceBusy||D().archived) return; voiceBusy=true;
+  $("voice-btn").classList.add("rec"); $("voice-label").textContent="正在听…（演示 2 秒）";
+  setTimeout(function(){
+    $("voice-btn").classList.remove("rec"); $("voice-label").textContent="按一下，用说话记一件事（演示模拟）"; voiceBusy=false;
+    D().records.unshift({type:"quote",meta:"语音 · 刚刚",chips:[],txt:D().voiceQuote,priv:false});
+    afterNewRecord("语音原话已保存（演示模拟，未转写）");
+    renderRecord(); renderHome(); renderSelect();
+  },2000);
+});
+$("btn-save-record").addEventListener("click", function(){
+  var inp=$("record-input"), v=inp.value.trim();
+  if(!v){ $("record-err").classList.add("show"); inp.focus(); return; }
+  $("record-err").classList.remove("show");
+  D().records.unshift({type:"quote",meta:"文字 · 刚刚 · "+(active==="ortho"?"周雯 代记":"本人"),chips:[],txt:"「"+v+"」",priv:false});
+  inp.value="";
+  afterNewRecord("原话已保存"); renderRecord(); renderHome(); renderSelect();
+});
+document.querySelectorAll("#filters button").forEach(function(b){ b.addEventListener("click", function(){ UI.filter=b.getAttribute("data-f"); renderRecord(); }); });
+
+/* 疑问页 */
+$("btn-adopt").addEventListener("click", function(){ toast("已采用整理表达，标记为待问"); });
+$("btn-keep").addEventListener("click", function(){ toast("已保留原话"); });
+var TPL=["下一次复查具体时间和地点是什么？","有哪些已交代的活动限制需要确认？","遇到问题应联系哪个既有渠道？","这次是否需要带上检查资料？"];
+$("tpl-list").innerHTML=TPL.map(function(q,i){ return '<div class="q"><span>'+esc(q)+'</span><button class="add" data-i="'+i+'">加入待问</button></div>'; }).join("");
+$("tpl-list").querySelectorAll(".add").forEach(function(b){ b.addEventListener("click", function(){
+  b.disabled=true; b.textContent="已加入 ✓"; addQ(TPL[+b.getAttribute("data-i")]);
+}); });
+
+/* 摘要流程 */
+$("btn-gen").addEventListener("click", function(){ genReview(); show("review"); toast("草稿由程序汇总生成，逐条核对"); });
+$("btn-confirm-sum").addEventListener("click", function(){
+  UI.confirmed=true; renderCard();
+  $("sum-status").textContent=(UI.fixed1||UI.fixed2)?"本人已核对 · 已修正":"本人已核对";
+  toast("已生成展示版；之后新增记录会提示待重新核对");
+  show("card");
+});
+var askOnce=false;
+$("card-stamp").addEventListener("click", function(){
+  if(active!=="ortho") return;
+  UI.verifier="self"; renderCard(); toast("本人重新核对完成：核对人已更新为周建国本人");
+});
+
+/* 诊室模式 */
+$("clinic-toggle").addEventListener("click", function(){
+  UI.clinicOn=!UI.clinicOn; screensEl.classList.toggle("clinic",UI.clinicOn);
+  $("clinic-toggle").textContent=UI.clinicOn?"退出诊室模式":"开启诊室模式（字号放大 · 问题逐条勾选）";
+  toast(UI.clinicOn?"诊室模式：字号放大，问题逐条勾选「已问过」":"已退出诊室模式");
+});
+
+/* 归档与新周期 */
+$("btn-archive").addEventListener("click", function(){ $("modal").classList.add("open"); });
+$("btn-arch-no").addEventListener("click", function(){ $("modal").classList.remove("open"); });
+$("btn-arch-yes").addEventListener("click", function(){
+  $("modal").classList.remove("open");
+  D().archived=true; phone.classList.add("archived"); phone.classList.add("hide-nav");
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
+  $("s-card").classList.add("active");
+  toast("本轮已归档，模拟提醒全部停止");
+});
+$("btn-newcycle").addEventListener("click", function(){
+  SC.ortho=freshOrtho(); UI.confirmed=false; UI.stale=false; UI.fixed1=false; UI.fixed2=false; UI.verifier=null;
+  phone.classList.remove("archived");
+  renderAll(); show("cycle"); toast("新周期：旧医嘱不自动延续");
+});
+
+/* 历史周期 */
+$("btn-hist").addEventListener("click", function(){
+  $("hist-list").innerHTML=
+    '<div class="h"><b>高血压周期（陈淑兰）</b> · '+(SC.hyper.archived?"已归档":"进行中")+'<br>11 月 2 日 — 11 月 16 日 · 血压 4 次记录 · 待问 2 项</div>'+
+    '<div class="h"><b>骨科周期（周建国）</b> · '+(SC.ortho.archived?"已归档":"进行中")+'<br>11 月 5 日 — 11 月 19 日 · 用药 12 次记录 · 待问 2 项<br><span style="font-size:11.5px;color:var(--ink-2)">归档周期只读；旧医嘱不自动带入新周期。</span></div>';
+  $("hist-modal").classList.add("open");
+});
+$("btn-hist-close").addEventListener("click", function(){ $("hist-modal").classList.remove("open"); });
+
+/* 模拟通知 / 切换周期 / 重置 */
+$("btn-notif").addEventListener("click", function(){ $("notif").classList.add("show"); });
+$("notif-open").addEventListener("click", function(){ $("notif").classList.remove("show"); renderHome(); show("home"); });
+$("btn-switch").addEventListener("click", function(){
+  active=(active==="ortho"?"hyper":"ortho");
+  UI.confirmed=false; UI.stale=false; UI.fixed1=false; UI.fixed2=false; UI.clinicOn=false;
+  screensEl.classList.remove("clinic"); phone.classList.remove("archived");
+  renderAll(); show("home");
+  toast(active==="ortho"?"已切换：骨科周期（周建国）":"已切换：高血压周期（陈淑兰）——同一套机制，数据独立");
+});
+$("btn-reset").addEventListener("click", function(){ location.reload(); });
+
+/* ================= 总渲染与启动 ================= */
+function renderAll(){ renderTop(); renderCheck(); renderHome(); renderRecord(); renderSelect(); genReview(); renderCard(); }
+renderAll();
+show("cycle");
+})();
+</script>
+</body>
+</html>
