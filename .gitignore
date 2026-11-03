@@ -1,0 +1,6 @@
+.DS_Store
+.~*.docx
+.~*.doc
+*.tmp
+node_modules/
+__MACOSX/

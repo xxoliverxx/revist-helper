@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>诊后助手 · 演示原型 v0.1（合成数据）</title>
+<style>
+:root{
+  --bg:#F5F7FA; --card:#FFFFFF; --ink:#172B3A; --muted:#475569;
+  --primary:#155E75; --hairline:#E2E8F0; --fieldline:#CBD5E1;
+  --ai:#E8F1F5; --pending-bg:#F8EDDC; --pending-ink:#704C16;
+  --error:#B42318;
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important; animation:none!important}
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:#E9EFF3; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif; color:var(--ink)}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+
+/* ===== 演示控制条（画布外） ===== */
+.demobar{max-width:860px;margin:0 auto;padding:16px 16px 8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.demobar h1{font-size:15px;margin:0;font-weight:600;color:#334155;flex:1 1 auto}
+.demobar .note{font-size:12px;color:#64748B;width:100%;margin:0}
+.demo-btn{font-size:13px;padding:8px 14px;border-radius:8px;border:1.5px solid var(--primary);background:#fff;color:var(--primary);cursor:pointer}
+.demo-btn:hover{background:#F0F7FA}
+
+/* ===== 手机舞台 ===== */
+.stage{display:flex;justify-content:center;padding:8px 12px 56px}
+.phone{width:390px;height:844px;background:var(--bg);border-radius:24px;box-shadow:0 20px 60px rgba(23,43,58,.18);overflow:hidden;position:relative;display:flex;flex-direction:column;border:1px solid #D7DFE7}
+@media (max-width:430px){
+  body{background:var(--bg)}
+  .phone{width:100%;height:100vh;height:100dvh;border-radius:0;border:none;box-shadow:none}
+}
+.statusbar{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:15px;font-weight:600;flex-shrink:0}
+.statusbar .sim{font-size:11px;color:#fff;background:var(--primary);border-radius:6px;padding:2px 8px;font-weight:500}
+
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow-y:auto;padding:14px 16px 24px;display:none;flex-direction:column;gap:14px}
+.screen.active{display:flex;animation:screenIn 200ms ease-out both}
+@keyframes screenIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+/* ===== 基础组件 ===== */
+.eyebrow{font-size:13px;color:var(--muted);margin:0}
+.title{font-size:24px;font-weight:700;margin:0;letter-spacing:.2px}
+.sub{font-size:13px;color:var(--muted);margin:0}
+.card{background:var(--card);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;border:1px solid transparent;transition:border-color 200ms ease-out, filter 300ms ease-in-out, opacity 300ms ease-in-out}
+.card.now{border-color:var(--fieldline)}
+.card.verified{border-color:var(--primary)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:12px;color:var(--muted);background:#F1F5F9;border-radius:10px;padding:4px 10px}
+.tag.pending{color:var(--pending-ink);background:var(--pending-bg)}
+.tag.chip{color:var(--muted);background:#fff;border:1px solid var(--fieldline);border-radius:10px;padding:3px 10px;font-size:12px}
+.f-label{font-size:14px;color:var(--muted)}
+.f-value{font-size:15px}
+.f-value.pending{color:var(--pending-ink);font-weight:500}
+.btn{height:48px;border-radius:8px;border:none;font-size:16px;font-weight:500;cursor:pointer;transition:background 200ms ease-out, color 200ms ease-out, box-shadow 200ms ease-out;width:100%}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#1A6E8A}
+.btn-primary:disabled{background:#94A3B8;cursor:default}
+.btn-secondary{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-secondary:hover{background:#F0F7FA}
+.link{font-size:14px;color:var(--primary);font-weight:500;background:none;border:none;cursor:pointer;padding:0;text-align:left}
+.link.center{width:100%;text-align:center}
+.link.right{width:100%;text-align:right}
+.footnote{font-size:13px;color:var(--muted)}
+.srcblock{background:var(--ai);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.srcblock .cap{font-size:13px;color:var(--primary);font-weight:500}
+.srcblock .txt{font-size:15px;line-height:1.6}
+.banner{background:var(--pending-bg);border-radius:8px;padding:10px 12px;font-size:14px;font-weight:500;color:var(--pending-ink)}
+.quote{background:#fff;border:1px solid var(--hairline);border-radius:8px;display:flex;overflow:hidden}
+.quote .bar{width:4px;background:var(--primary);flex-shrink:0}
+.quote .qbody{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.quote .cap{font-size:13px;color:var(--muted)}
+.quote .txt{font-size:16px;line-height:1.6}
+.aiblock{background:var(--ai);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.aiblock .cap{font-size:13px;color:var(--primary);font-weight:500}
+.aiblock .txt{font-size:15px;line-height:1.6}
+.divider{height:1px;background:var(--hairline);width:100%}
+.field{background:#fff;border:1px solid var(--fieldline);border-radius:8px;padding:14px;font-size:16px;line-height:1.6;width:100%;resize:vertical;min-height:88px;font-family:inherit;color:var(--ink)}
+.field.err{border-color:var(--error)}
+.errmsg{font-size:13px;color:var(--error);display:none}
+.errmsg.show{display:block}
+
+/* 记录列表 */
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:#fff;border:1px solid var(--hairline);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.item .meta{font-size:12px;color:var(--muted)}
+.item .txt{font-size:15px;line-height:1.6}
+.item .acts{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.item.enter{animation:riseIn 200ms ease-out both}
+@keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* 摘要段落 */
+.sect{display:flex;flex-direction:column;gap:8px}
+.sect h3{font-size:17px;font-weight:600;margin:0}
+.sect .line{font-size:15px;line-height:1.6}
+.sect .line.flash{animation:flashBg 400ms ease-out}
+@keyframes flashBg{0%{background:#FEF3C7;border-radius:6px}100%{background:transparent}}
+.stagger{opacity:0;transform:translateY(8px)}
+.stagger.on{animation:riseIn 300ms ease-out both}
+
+/* ===== 底部导航 ===== */
+.nav{flex-shrink:0;padding:12px 21px 21px}
+.nav .pill{height:62px;background:#fff;border:1px solid var(--hairline);border-radius:36px;display:flex;padding:4px;gap:0}
+.nav .tab{flex:1;border:none;background:transparent;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;font-weight:500}
+.nav .tab .ic{width:18px;height:18px;display:block}
+.nav .tab.active{background:var(--primary);color:#fff}
+.phone.hide-nav .nav{display:none}
+
+/* ===== 通知浮层 ===== */
+.notif{position:absolute;top:8px;left:12px;right:12px;background:rgba(255,255,255,.96);border:1px solid var(--hairline);border-radius:16px;box-shadow:0 8px 30px rgba(23,43,58,.15);padding:12px 14px;transform:translateY(-130%);transition:transform 300ms ease-out;z-index:40;display:flex;flex-direction:column;gap:6px}
+.notif.show{transform:none}
+.notif .nhead{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.notif .badge{font-size:11px;background:var(--pending-bg);color:var(--pending-ink);border-radius:6px;padding:2px 8px}
+.notif .ntxt{font-size:14px;line-height:1.5}
+.notif .nbtn{align-self:flex-start}
+
+/* ===== Toast ===== */
+.toast{position:absolute;left:50%;bottom:110px;transform:translate(-50%,20px);background:#172B3A;color:#fff;font-size:14px;padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity 200ms ease-out, transform 200ms ease-out;z-index:50;max-width:320px;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ===== 归档态 ===== */
+.phone.archived .card{filter:grayscale(1);opacity:.55}
+.archived-banner{display:none;background:#EEF2F6;border-radius:12px;padding:16px;flex-direction:column;gap:6px;border:1px solid var(--hairline)}
+.phone.archived .archived-banner{display:flex}
+.archived-banner .t{font-size:16px;font-weight:600}
+.archived-banner .d{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ===== 弹窗 ===== */
+.modal{position:absolute;inset:0;background:rgba(23,43,58,.45);display:none;align-items:flex-end;z-index:60}
+.modal.open{display:flex}
+.sheet{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:20px 16px 28px;display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font-size:18px}
+.sheet p{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="demobar">
+  <h1>诊后助手 · 可点击演示 v0.1 — 合成案例：陈淑兰（58 岁 · 高血压随访）</h1>
+  <button class="demo-btn" id="btn-notif">模拟：复诊提醒到达</button>
+  <button class="demo-btn" id="btn-reset">重置演示</button>
+  <p class="note">全部数据为虚构合成 · 页面内提醒为演示模拟，非后台真实推送 · 动效 200–300ms，支持系统「减少动态效果」</p>
+</div>
+
+<div class="stage">
+<div class="phone" id="phone">
+
+  <div class="statusbar"><span>9:41</span><span class="sim">合成演示</span><span>5G</span></div>
+
+  <div class="screens">
+
+    <!-- 01 当前安排 -->
+    <section class="screen" id="s-home">
+      <p class="eyebrow">诊后助手 · 高血压随访 · 复诊前 2 天（11 月 14 日）</p>
+      <h2 class="title">当前安排</h2>
+      <div class="card now" id="next-card">
+        <div class="row"><span class="f-label" style="font-size:14px;font-weight:500">下一件事</span><span class="tag">待处理</span></div>
+        <div style="font-size:20px;font-weight:700">复诊 · 全科门诊</div>
+        <div class="f-value">11 月 16 日 · 具体时间待确认</div>
+        <div style="font-size:13px;color:var(--muted)">来源：本人核对过的门诊说明</div>
+        <button class="btn btn-primary" data-go="check">查看安排</button>
+      </div>
+      <button class="btn btn-secondary" data-go="record">＋ 记一件事</button>
+      <div class="card">
+        <div class="row"><span style="font-size:16px;font-weight:500">复诊时想问 · <span id="q-count">2</span> 项</span></div>
+        <div style="font-size:13px;color:var(--muted)">服药后头晕 · 复诊是否要重新挂号</div>
+        <button class="link right" data-go="record">查看 →</button>
+      </div>
+      <div class="card">
+        <div class="f-label" style="font-weight:500">今日记录</div>
+        <div class="f-value">服药已记录 · 血压测量 2 / 2 次已记录</div>
+      </div>
+      <p class="footnote">只按你选择的事项提醒，可随时关闭。本页提醒为演示模拟。</p>
+    </section>
+
+    <!-- 02 核对安排 -->
+    <section class="screen" id="s-check">
+      <button class="link" data-go="home">← 返回</button>
+      <h2 class="title">核对安排</h2>
+      <p class="sub">第 3 项 / 共 3 项 · 确认的是内容，不是事项已完成</p>
+      <div class="srcblock">
+        <span class="cap">原始说明 · 合成材料</span>
+        <span class="txt">「两周后（11 月 16 日）全科门诊复诊，复查血压控制情况。复诊请携带家庭血压记录。」</span>
+      </div>
+      <div class="card now" id="check-card">
+        <div style="font-size:17px;font-weight:600">整理草稿：复诊安排</div>
+        <div class="row"><span class="f-label">日期</span><span class="f-value">11 月 16 日</span></div>
+        <div class="row"><span class="f-label">具体时间</span><span class="f-value pending">还不确定 · 待确认</span></div>
+        <div class="row"><span class="f-label">地点</span><span class="f-value pending">全科门诊 · 诊室未写明 · 待确认</span></div>
+        <div class="banner" style="font-size:12px;font-weight:400">来源不明的信息不会被补全，可保存待确认或记为要问的事。</div>
+        <button class="btn btn-primary" id="btn-confirm-card">确认这项内容</button>
+        <button class="btn btn-secondary" id="btn-save-pending">保存待确认</button>
+      </div>
+      <button class="link center" data-go="record">有疑问？记下要问的事 →</button>
+    </section>
+
+    <!-- 03 记一件事 + 记录列表 -->
+    <section class="screen" id="s-record">
+      <p class="eyebrow">诊后助手 · 高血压随访</p>
+      <h2 class="title">记一件事</h2>
+      <p class="sub">先保存原话，去向稍后再选</p>
+      <span style="font-size:16px;font-weight:500">想记下什么？</span>
+      <textarea class="field" id="record-input" rows="2" placeholder="说一句就行，比如今天的感觉或想问的事"></textarea>
+      <span class="errmsg" id="record-err">还没有内容，先说一句再保存。</span>
+      <div class="row"><span class="f-label">发生时间：刚刚</span><button class="link">修改</button></div>
+      <button class="btn btn-primary" id="btn-save-record">保存记录</button>
+      <div class="srcblock">
+        <span class="txt" style="font-size:13px">保存后可选：加入复诊待问 / 查看联系渠道 / 仅自己保存。私人记录不会自动加入对外摘要。</span>
+      </div>
+      <div class="divider" style="margin-top:4px"></div>
+      <span style="font-size:16px;font-weight:600">最近记录</span>
+      <div class="list" id="record-list">
+        <div class="item">
+          <span class="meta">11 月 5 日 20:12</span>
+          <span class="txt">「今天吃完药有点晕乎，是不是药不对。」</span>
+          <div class="acts"><span class="tag">待问</span><button class="link" data-go="clarity">帮我整理 →</button></div>
+        </div>
+        <div class="item">
+          <span class="meta">11 月 3 日</span>
+          <span class="txt">「复诊时要重新挂号吗？」</span>
+          <div class="acts"><span class="tag">待问</span></div>
+        </div>
+        <div class="item">
+          <span class="meta">11 月 7 日</span>
+          <span class="txt">「老伴说我脾气变急了，有点担心。」</span>
+          <div class="acts"><span class="tag chip">私人 · 默认不外发</span></div>
+        </div>
+      </div>
+      <p class="footnote">打开渠道不等于医生已收到。</p>
+    </section>
+
+    <!-- 04 把问题说清楚 -->
+    <section class="screen" id="s-clarity">
+      <button class="link" data-go="record">← 返回记录</button>
+      <h2 class="title">把问题说清楚</h2>
+      <p class="sub">AI 只提出改写草稿，决定权在你</p>
+      <div class="quote">
+        <span class="bar"></span>
+        <div class="qbody">
+          <span class="cap">你的原话 · 11 月 5 日 20:12</span>
+          <span class="txt">「今天吃完药有点晕乎，是不是药不对。」</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" id="btn-ai">帮我整理成问题</button>
+      <div class="aiblock" id="ai-block" style="display:none">
+        <span class="cap">AI 整理 · 待你核对</span>
+        <span class="txt">「服药第 3 天出现过一次轻微头晕，想确认是否与用药有关、需要怎么处理。」</span>
+        <button class="btn btn-primary" id="btn-adopt" style="margin-top:6px">采用这段表达</button>
+        <button class="btn btn-secondary" id="btn-keep">保留原话</button>
+      </div>
+      <button class="link center" id="btn-channel">查看已核实的联系渠道 →</button>
+      <div class="card" id="channel-card" style="display:none">
+        <span style="font-size:14px;font-weight:600">社区卫生服务中心 · 咨询电话（工作日）</span>
+        <span style="font-size:13px;color:var(--muted)">来源：官方公开信息 · 核实日期 2026-11-01</span>
+        <div class="divider"></div>
+        <span style="font-size:14px;font-weight:600">120 急救</span>
+        <span style="font-size:13px;color:var(--muted)">突发明显不适时使用 · 公开信息</span>
+        <span style="font-size:13px;color:var(--muted)">打开渠道不代表医生已收到；是否联系、何时联系由你决定。</span>
+      </div>
+    </section>
+
+    <!-- 05 核对复诊摘要 -->
+    <section class="screen" id="s-summary">
+      <p class="eyebrow">诊后助手 · 高血压随访 · 复诊前 2 天</p>
+      <h2 class="title">核对复诊摘要</h2>
+      <p class="sub">逐条核对，有出入随时改</p>
+      <div class="banner" id="sum-status">摘要草稿 · 尚未核对（11 月 14 日生成）</div>
+      <div class="sect stagger" data-stagger="0">
+        <h3>一、安排及处理记录</h3>
+        <span class="line" id="bp-line">血压监测：坚持每日测量血压</span>
+        <div class="card" style="gap:6px;padding:12px">
+          <span style="font-size:13px;color:var(--muted)">原话对照 · 记录来源</span>
+          <span style="font-size:14px;line-height:1.6">11 月 3、5、8、10 日有测量记录（共 4 天），其余日期未记录。</span>
+        </div>
+        <button class="link" id="btn-fix">修改表达 · 移出本次摘要</button>
+      </div>
+      <div class="sect stagger" data-stagger="1">
+        <h3>二、本人记录的变化</h3>
+        <span class="line">服药第 3 天出现过一次轻微头晕。</span>
+      </div>
+      <div class="sect stagger" data-stagger="2">
+        <h3>三、想问的问题</h3>
+        <span class="line">1. 头晕是否与用药有关？</span>
+        <span class="line">2. 复诊是否要重新挂号？</span>
+      </div>
+      <button class="btn btn-primary" data-go="card">确认并查看展示版</button>
+      <p class="footnote">本人核对不等于医学审核。</p>
+    </section>
+
+    <!-- 06 复诊沟通卡 -->
+    <section class="screen" id="s-card">
+      <p class="eyebrow" id="card-status">合成案例 · 本人已核对（11 月 14 日）</p>
+      <h2 class="title">复诊沟通卡</h2>
+      <p class="sub">一页呈现，复诊时向医生展示</p>
+      <div class="archived-banner">
+        <span class="t">本轮已归档</span>
+        <span class="d">本轮软件提醒已全部停止；历史记录保留可查。归档不表示治疗结束，也不取消医院预约。演示流程完成——可用顶部「重置演示」重新开始。</span>
+      </div>
+      <div class="card" id="talk-card">
+        <span style="font-size:16px;font-weight:600">一、已有安排</span>
+        <span class="f-value">11 月 16 日复诊 · 全科门诊（时间待确认）</span>
+        <span class="f-value">携带家庭血压记录 · 已准备</span>
+        <div class="divider"></div>
+        <span style="font-size:16px;font-weight:600">二、本人记录的变化</span>
+        <span class="f-value" id="card-bp">血压监测：4 天有记录，其余未记录</span>
+        <span class="f-value">服药第 3 天出现过一次轻微头晕</span>
+        <div class="divider"></div>
+        <span style="font-size:16px;font-weight:600">三、想问的问题</span>
+        <span class="f-value">1. 头晕是否与用药有关？</span>
+        <span class="f-value">2. 复诊是否要重新挂号？</span>
+        <span style="font-size:12px;color:var(--muted);text-align:center">本人自述 · 非医学审核</span>
+      </div>
+      <button class="btn btn-primary" id="btn-archive">结束本轮并归档</button>
+      <button class="btn btn-secondary" data-go="summary">返回修改</button>
+      <p class="footnote">归档将停止本轮全部软件提醒，不改变医嘱、不取消医院预约。</p>
+    </section>
+
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="nav" id="nav">
+    <div class="pill">
+      <button class="tab active" data-tab="home">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="currentColor" stroke-width="2"/><path d="M8.5 3v3.5M15.5 3v3.5M3.5 10.5h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        安排
+      </button>
+      <button class="tab" data-tab="record">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 19.5h4L19 9a2.6 2.6 0 0 0-3.7-3.7L4.8 15.8l-.3 3.7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13 6.5l3.7 3.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        记录
+      </button>
+      <button class="tab" data-tab="summary">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19.5 3.5v3.4h-3.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        复诊
+      </button>
+    </div>
+  </nav>
+
+  <!-- 模拟通知 -->
+  <div class="notif" id="notif">
+    <div class="nhead"><span>现在 · 诊后助手</span><span class="badge">模拟提醒</span></div>
+    <span class="ntxt">你设置的一项复诊安排临近，查看时间与准备事项。</span>
+    <button class="link nbtn" id="notif-open">查看</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 归档确认 -->
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <h3>结束本轮前确认</h3>
+      <p>归档将停止：复诊提醒、监测提醒等本轮全部软件提醒。归档不表示治疗结束，也不取消医院预约。历史周期保留可查。</p>
+      <button class="btn btn-primary" id="btn-archive-yes">归档并停止本轮提醒</button>
+      <button class="btn btn-secondary" id="btn-archive-no">返回检查</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var phone = document.getElementById("phone");
+  var screens = { home:"s-home", check:"s-check", record:"s-record", clarity:"s-clarity", summary:"s-summary", card:"s-card" };
+  var tabScreens = { home:"home", record:"record", clarity:"record", summary:"summary" };
+  var navNoScreens = { check:1, card:1 };
+  var current = "home";
+  var fixed = false;          // 摘要错误是否已修正
+  var confirmed = false;      // 摘要是否已确认
+  var sumShown = false;       // 摘要是否已首次打开（stagger）
+  var toastTimer = null;
+
+  function $(id){ return document.getElementById(id); }
+  function show(name){
+    current = name;
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    var sec = $(screens[name]);
+    sec.classList.add("active");
+    sec.scrollTop = 0;
+    // 导航可见性与高亮
+    phone.classList.toggle("hide-nav", !!navNoScreens[name]);
+    document.querySelectorAll(".nav .tab").forEach(function(t){
+      t.classList.toggle("active", t.getAttribute("data-tab") === (tabScreens[name] || null));
+    });
+    // 摘要首次打开时段落依次淡入（60ms 间隔）
+    if(name === "summary" && !sumShown){
+      sumShown = true;
+      var items = sec.querySelectorAll(".stagger");
+      items.forEach(function(el, i){
+        setTimeout(function(){ el.classList.add("on"); }, 60 * i);
+      });
+    }
+  }
+  function toast(msg){
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+
+  // 路由：data-go
+  document.querySelectorAll("[data-go]").forEach(function(el){
+    el.addEventListener("click", function(){ show(el.getAttribute("data-go")); });
+  });
+  // 底部导航
+  document.querySelectorAll(".nav .tab").forEach(function(t){
+    t.addEventListener("click", function(){ show(t.getAttribute("data-tab")); });
+  });
+
+  // 模拟通知
+  $("btn-notif").addEventListener("click", function(){ $("notif").classList.add("show"); });
+  $("notif-open").addEventListener("click", function(){
+    $("notif").classList.remove("show");
+    show("home");
+    var c = $("next-card");
+    c.style.boxShadow = "0 0 0 3px #155E75";
+    setTimeout(function(){ c.style.boxShadow = ""; }, 1600);
+  });
+
+  // 02 核对安排
+  $("btn-confirm-card").addEventListener("click", function(){
+    this.textContent = "已核对 ✓";
+    this.disabled = true;
+    $("check-card").classList.remove("now");
+    $("check-card").classList.add("verified");
+    toast("内容已核对。核对不等于事项已完成");
+  });
+  $("btn-save-pending").addEventListener("click", function(){ toast("已保存为待确认"); });
+
+  // 03 记一件事
+  $("btn-save-record").addEventListener("click", function(){
+    var input = $("record-input");
+    if(!input.value.trim()){
+      input.classList.add("err");
+      $("record-err").classList.add("show");
+      input.focus();
+      return;
+    }
+    input.classList.remove("err");
+    $("record-err").classList.remove("show");
+    var item = document.createElement("div");
+    item.className = "item enter";
+    item.innerHTML =
+      '<span class="meta">刚刚</span>' +
+      '<span class="txt">「' + input.value.replace(/[<>&]/g, function(ch){
+        return {"<":"&lt;",">":"&gt;","&":"&amp;"}[ch];
+      }) + '」</span>' +
+      '<div class="acts"><span class="tag">已保存</span>' +
+      '<button class="link" data-act="toask">加入复诊待问</button>' +
+      '<button class="link" data-act="self">仅自己保存</button></div>';
+    item.querySelector('[data-act="toask"]').addEventListener("click", function(){
+      this.parentElement.innerHTML = '<span class="tag">待问</span>';
+      $("q-count").textContent = String(Number($("q-count").textContent) + 1);
+      toast("已加入复诊待问");
+    });
+    item.querySelector('[data-act="self"]').addEventListener("click", function(){
+      this.parentElement.innerHTML = '<span class="tag chip">私人 · 默认不外发</span>';
+      toast("已保存，默认不进入对外摘要");
+    });
+    $("record-list").prepend(item);
+    input.value = "";
+    var btn = this;
+    btn.textContent = "已保存 ✓";
+    setTimeout(function(){ btn.textContent = "保存记录"; }, 1500);
+    toast("已保存原话，去向由你选择");
+  });
+
+  // 04 把问题说清楚
+  $("btn-ai").addEventListener("click", function(){
+    var blk = $("ai-block");
+    if(blk.style.display === "none"){
+      blk.style.display = "flex";
+      this.style.display = "none";
+    }
+  });
+  $("btn-adopt").addEventListener("click", function(){ toast("已采用整理表达，问题标记为「待问」"); });
+  $("btn-keep").addEventListener("click", function(){ toast("已保留原话"); });
+  $("btn-channel").addEventListener("click", function(){
+    var c = $("channel-card");
+    c.style.display = (c.style.display === "none" || c.style.display === "") ? "flex" : "none";
+  });
+
+  // 05 核对复诊摘要：纠错
+  $("btn-fix").addEventListener("click", function(){
+    var line = $("bp-line");
+    line.textContent = "血压监测：4 天有记录，其余日期未记录";
+    line.classList.remove("flash");
+    void line.offsetWidth;
+    line.classList.add("flash");
+    fixed = true;
+    $("sum-status").textContent = "已修改 · 待重新核对（11 月 14 日）";
+    this.style.display = "none";
+    toast("已修改。摘要回到「待核对」状态");
+  });
+
+  // 06 复诊沟通卡
+  document.querySelector('[data-go="card"]').addEventListener("click", function(){
+    if(!confirmed){
+      confirmed = true;
+      $("sum-status").textContent = fixed ? "本人已核对 · 已修正（11 月 14 日）" : "本人已核对（11 月 14 日）";
+      $("card-bp").textContent = fixed
+        ? "血压监测：4 天有记录，其余未记录"
+        : "血压监测：坚持每日测量血压";
+      $("card-status").textContent = fixed ? "合成案例 · 本人已核对（11 月 14 日）" : "合成案例 · 本人已核对 · 有一处未修正（见二）";
+    }
+  });
+  $("btn-archive").addEventListener("click", function(){ $("modal").classList.add("open"); });
+  $("btn-archive-no").addEventListener("click", function(){ $("modal").classList.remove("open"); });
+  $("btn-archive-yes").addEventListener("click", function(){
+    $("modal").classList.remove("open");
+    phone.classList.add("archived");
+    phone.classList.add("hide-nav");
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    var sec = $("s-card");
+    sec.classList.add("active");
+    sec.scrollTop = 0;
+    toast("本轮已归档，软件提醒已全部停止");
+  });
+
+  // 重置
+  $("btn-reset").addEventListener("click", function(){ location.reload(); });
+
+  show("home");
+})();
+</script>
+</body>
+</html>

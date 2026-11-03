@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>诊后助手 · 设计方案 v0.2 纸感备忘录（合成数据）</title>
+<style>
+/* ============ 设计令牌 v0.2「纸感备忘录」 ============ */
+:root{
+  --paper:#FAF8F3;        /* 纸感暖白画布（替代 v0.1 冷灰蓝 #F5F7FA） */
+  --card:#FFFFFF;
+  --ink:#1C2B33;          /* 深墨（正文与标题） */
+  --ink-2:#5B6B75;        /* 次要文字（比 v0.1 #475569 加深一档，保 4.5:1） */
+  --hair:#E9E2D6;         /* 暖色发丝线（规则线，非边框） */
+  --teal:#12586F;         /* 主色·墨青（微加深） */
+  --teal-deep:#0C3F52;    /* 深青（首屏主卡底） */
+  --teal-tint:#EAF2F4;    /* 青纸（AI 说明块底） */
+  --apricot:#F6E8D9;      /* 杏纸（私人空间专用暖底） */
+  --brown:#7C4E2D;         /* 暖褐（杏纸上的文字） */
+  --seal:#A63D2F;         /* 朱砂（核对章专用，全站唯一） */
+  --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --sp:8px;               /* 间距刻度基数 */
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding:56px 28px 96px}
+a{color:var(--teal)}
+
+/* ============ 展示页自身排版 ============ */
+.kicker{font-size:12px;letter-spacing:.35em;color:var(--ink-2);margin:0 0 14px}
+h1{font-family:var(--serif);font-size:44px;line-height:1.15;margin:0 0 10px;font-weight:700}
+.lede{font-size:16px;color:var(--ink-2);max-width:640px;margin:0 0 8px}
+.meta{font-size:13px;color:var(--ink-2);margin:0}
+.meta b{color:var(--seal);font-weight:600}
+hr.rule{border:none;border-top:1px solid var(--hair);margin:44px 0}
+h2{font-family:var(--serif);font-size:26px;margin:0 0 6px;font-weight:700}
+h2 .no{color:var(--seal);margin-right:10px;font-size:18px;vertical-align:2px}
+.sec-note{font-size:13.5px;color:var(--ink-2);margin:0 0 26px;max-width:680px}
+
+/* 基调卡 */
+.tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+.token{background:var(--card);border-radius:10px;padding:18px 18px 16px;box-shadow:0 1px 0 var(--hair)}
+.token .t{font-family:var(--serif);font-size:17px;margin:0 0 8px}
+.token .d{font-size:13px;color:var(--ink-2);margin:0;line-height:1.75}
+.token .sw{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+
+/* 手机陈列 */
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px;margin-top:8px}
+.exhibit{display:flex;flex-direction:column;gap:18px}
+.phone{width:100%;max-width:380px;margin:0 auto;background:var(--paper);border-radius:28px;padding:10px;box-shadow:0 24px 60px rgba(28,43,51,.14),0 2px 8px rgba(28,43,51,.06)}
+.scr{background:var(--paper);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;min-height:680px;animation:pop .5s ease-out both}
+@keyframes pop{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.exhibit:nth-child(2) .scr{animation-delay:.08s}
+.exhibit:nth-child(3) .scr{animation-delay:.16s}
+
+/* 屏内通用 */
+.st{display:flex;justify-content:space-between;align-items:center;padding:12px 22px 4px;font-size:13px;font-weight:600}
+.st .sim{font-size:10px;color:#fff;background:var(--teal);border-radius:5px;padding:2px 7px;font-weight:500}
+.body{flex:1;padding:10px 20px 18px;display:flex;flex-direction:column;gap:24px}
+.eyebrow{font-size:11px;letter-spacing:.22em;color:var(--ink-2)}
+.pt{font-family:var(--serif);font-size:25px;font-weight:700;letter-spacing:.02em;margin:0;line-height:1.25}
+.sub{font-size:12.5px;color:var(--ink-2);margin:2px 0 0}
+
+/* ① 首页 */
+.hero{background:var(--teal-deep);border-radius:14px;padding:20px 18px 18px;color:#fff;display:flex;flex-direction:column;gap:9px;box-shadow:0 14px 34px rgba(12,63,82,.28)}
+.hero .lbl{display:flex;justify-content:space-between;align-items:center}
+.hero .lbl span:first-child{font-size:12px;letter-spacing:.3em;color:rgba(255,255,255,.72)}
+.hero .tag{font-size:11px;color:#F6E8D9;border:1px solid rgba(246,232,217,.55);border-radius:5px;padding:2px 9px;letter-spacing:.12em}
+.hero .ttl{font-family:var(--serif);font-size:22px;font-weight:700;margin:0}
+.hero .when{font-size:15px;font-variant-numeric:tabular-nums}
+.hero .src{font-size:12px;color:rgba(255,255,255,.62)}
+.hero .go{margin-top:6px;height:46px;border-radius:9px;border:none;background:#FFF;color:var(--teal-deep);font-size:15.5px;font-weight:600;font-family:var(--sans);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.hero .go:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,.22)}
+.record-link{height:46px;border-radius:9px;background:transparent;border:1.5px dashed var(--teal);color:var(--teal);font-size:15px;font-weight:500;font-family:var(--sans);cursor:pointer}
+.ask{background:var(--card);border-radius:12px;padding:16px 16px 14px;box-shadow:0 1px 0 var(--hair)}
+.ask .n{font-family:var(--serif);font-size:30px;font-weight:700;line-height:1;color:var(--teal);font-variant-numeric:tabular-nums}
+.ask .n small{font-size:14px;color:var(--ink-2);font-weight:400;margin-left:2px;font-family:var(--sans)}
+.ask .row{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px}
+.ask .who{font-size:12.5px;color:var(--ink-2)}
+.ask .lk{font-size:13px;font-weight:600;color:var(--teal)}
+.today{display:flex;gap:24px;padding:0 4px}
+.today .cell{display:flex;flex-direction:column}
+.today .v{font-family:var(--serif);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.today .v .of{color:var(--ink-2);font-weight:400}
+.today .k{font-size:11.5px;color:var(--ink-2);letter-spacing:.1em}
+.foot{font-size:12px;color:var(--ink-2);padding:0 4px}
+
+/* 底部导航 v0.2：自绘方形笔触图标 */
+.nav{padding:10px 16px 18px}
+.nav .bar{background:var(--card);border-radius:22px;display:flex;padding:5px;box-shadow:0 6px 20px rgba(28,43,51,.1)}
+.nav a{flex:1;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 7px;border-radius:17px;font-size:11.5px;letter-spacing:.18em;color:var(--ink-2)}
+.nav a svg{width:19px;height:19px;display:block}
+.nav a.on{background:var(--teal-deep);color:#fff}
+.nav a.on svg *{stroke:#fff!important}
+
+/* ② 记一件事 */
+.qcard{background:var(--card);border-radius:12px;box-shadow:0 1px 0 var(--hair);padding:16px 16px 14px;border-left:3px solid var(--brown)}
+.qcard .cap{font-size:11px;letter-spacing:.2em;color:var(--brown);margin:0 0 8px}
+.qcard .quote{font-family:var(--serif);font-size:17.5px;line-height:1.75;margin:0;color:var(--ink)}
+.qcard .time{font-size:11.5px;color:var(--ink-2);margin-top:10px;font-variant-numeric:tabular-nums}
+.ai{background:var(--teal-tint);border-radius:12px;padding:15px 16px 14px;display:flex;flex-direction:column;gap:7px}
+.ai .cap{font-size:11px;letter-spacing:.2em;color:var(--teal);margin:0}
+.ai .cap::before{content:"✳ ";font-size:12px}
+.ai .txt{font-size:14.5px;margin:0;line-height:1.75}
+.btns{display:flex;flex-direction:column;gap:10px}
+.b1{height:46px;border-radius:9px;border:none;background:var(--teal);color:#fff;font-size:15.5px;font-weight:600;font-family:var(--sans);cursor:pointer;transition:background .15s ease}
+.b1:hover{background:var(--teal-deep)}
+.b2{height:46px;border-radius:9px;border:none;background:transparent;color:var(--teal);font-size:15px;font-family:var(--sans);cursor:pointer}
+.warmnote{background:var(--apricot);border-radius:12px;padding:13px 16px;font-size:12.5px;line-height:1.8;color:var(--brown)}
+.warmnote b{font-weight:600}
+
+/* ③ 复诊沟通卡「打印单据」版 */
+.sheet{background:var(--card);border-radius:12px;box-shadow:0 1px 0 var(--hair);padding:20px 18px 16px;position:relative}
+.sheet .head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:2px solid var(--ink)}
+.sheet .head .t{font-family:var(--serif);font-size:19px;font-weight:700;margin:0}
+.sheet .head .d{font-size:11.5px;color:var(--ink-2);margin:3px 0 0;font-variant-numeric:tabular-nums}
+.stamp{font-family:var(--serif);font-size:11px;color:var(--seal);border:1.5px solid var(--seal);border-radius:4px;padding:3px 8px;letter-spacing:.18em;transform:rotate(-4deg);opacity:.9;white-space:nowrap}
+.sec{padding:14px 0 4px;border-bottom:1px solid var(--hair)}
+.sec:last-of-type{border-bottom:none}
+.sec h4{font-family:var(--serif);font-size:14.5px;margin:0 0 8px;letter-spacing:.06em}
+.sec ol{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.sec li{font-size:14px;line-height:1.7;padding-left:22px;position:relative;font-variant-numeric:tabular-nums}
+.sec li::before{content:attr(data-no);position:absolute;left:0;top:2px;font-family:var(--serif);color:var(--teal);font-size:13px}
+.sec .q{color:var(--ink-2);font-size:12px;margin-top:2px}
+.sec .q::before{content:"└ 原话：「";color:var(--brown)}
+.sec .q::after{content:"」";color:var(--brown)}
+.sheet .cert{font-size:11px;color:var(--ink-2);text-align:center;margin:12px 0 0;letter-spacing:.14em}
+.endrow{display:flex;flex-direction:column;gap:10px}
+.sheetfoot{font-size:12px;color:var(--ink-2);padding:0 4px}
+
+/* 注解列 */
+.notes{display:flex;flex-direction:column;gap:14px;padding:2px 2px 0}
+.notes .cap{font-family:var(--serif);font-size:15px;font-weight:700;margin:0 0 2px}
+.note{display:flex;gap:12px;align-items:flex-start}
+.note .no{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--teal-deep);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:3px;font-weight:600}
+.note .tx{font-size:13px;line-height:1.75;color:var(--ink-2)}
+.note .tx b{color:var(--ink);font-weight:600}
+.note .tx .r{display:inline-block;font-size:10.5px;background:var(--teal-tint);color:var(--teal);border-radius:4px;padding:1px 6px;margin-left:6px;letter-spacing:.05em;vertical-align:1px;white-space:nowrap}
+
+/* 对照表 */
+table.diff{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 1px 0 var(--hair)}
+table.diff th,table.diff td{padding:12px 14px;text-align:left;vertical-align:top;line-height:1.65}
+table.diff th{font-family:var(--serif);font-size:13.5px;letter-spacing:.08em;background:var(--paper);border-bottom:2px solid var(--ink)}
+table.diff td{border-bottom:1px solid var(--hair);color:var(--ink-2)}
+table.diff td:first-child{color:var(--ink);font-weight:600;white-space:nowrap}
+table.diff tr:last-child td{border-bottom:none}
+table.diff .src a{font-size:12px;text-decoration:none;border-bottom:1px dotted currentColor}
+
+/* 来源 */
+.cites{font-size:13px;color:var(--ink-2);line-height:2.1;max-width:760px}
+.cites b{color:var(--ink)}
+@media (max-width:640px){
+  h1{font-size:34px}
+  .gallery{grid-template-columns:1fr}
+  .notes{padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="kicker">诊后助手 · 设计方案 V0.2 · 纸感备忘录</p>
+<h1>从「组件默认」到「纸感备忘录」</h1>
+<p class="lede">v0.1 的问题不是不干净，而是每个视觉决策都来自通用组件库的安全默认值。v0.2 把每个决策改为从这个产品的三个真实参照物推导：医院打印单据、患者手写原话、医生 30 秒的阅读场景。</p>
+<p class="meta">合成案例：陈淑兰（58 岁 · 高血压随访）｜全部数据为虚构合成 ｜ 方法：《UI 设计军规》26 条 ＋ 立正 Open Context 思考透镜</p>
+
+<hr class="rule">
+
+<h2><span class="no">壹</span>设计基调卡（动手前钉死的四项）</h2>
+<p class="sec-note">「可信、温暖、克制」这些模糊词，先翻译成可观察的决定（军规 21）：</p>
+<div class="tokens">
+  <div class="token"><p class="t">字体</p><p class="d">UI 用无衬线；<b>标题、原话、沟通卡一律宋体</b>——宋体＝打印单据与亲笔记录的字体记忆。色相数量上限：3（墨青＋暖褐＋朱砂）。</p></div>
+  <div class="token"><p class="t">色彩</p><p class="d"><span class="sw" style="background:#0C3F52"></span>深青只给首屏主卡与核对章以外的强调；<span class="sw" style="background:#F6E8D9"></span>暖杏只出现在用户自己的情绪空间；<span class="sw" style="background:#A63D2F"></span>朱砂全站仅核对章一处。强调色占比 ≤10%。</p></div>
+  <div class="token"><p class="t">圆角与线</p><p class="d">卡 12px、按钮 9px（中性偏严肃）；分区靠<b>背景色差与留白</b>，规则线只保留单据式发丝线，禁止整圈描边卡片（军规 19）。</p></div>
+  <div class="token"><p class="t">间距</p><p class="d">组间距 24px ≈ 组内距 9px 的 <b>2.6 倍</b>（军规 09：亲疏之别）；正文 15px/行高 1.75；数字一律等宽表格数字。</p></div>
+</div>
+
+<hr class="rule">
+
+<h2><span class="no">贰</span>三个关键屏（静态陈列 + 注解）</h2>
+<p class="sec-note">同一套合成数据，视觉全部换骨。每屏右侧注解标注「改了什么、为什么、对应军规编号」。</p>
+
+<div class="gallery">
+
+  <!-- ============ 屏 1：首页 ============ -->
+  <div class="exhibit">
+    <div class="phone"><div class="scr">
+      <div class="st"><span>9:41</span><span class="sim">合成演示</span><span>5G</span></div>
+      <div class="body">
+        <div>
+          <p class="eyebrow" style="margin:0 0 6px">高血压随访 · 复诊前 2 天</p>
+          <h3 class="pt">当前安排</h3>
+        </div>
+        <div class="hero">
+          <div class="lbl"><span>下 一 件 事</span><span class="tag">待处理</span></div>
+          <p class="ttl">复诊 · 全科门诊</p>
+          <p class="when">11 月 16 日 · 时间待确认</p>
+          <p class="src">来源：本人核对过的门诊说明</p>
+          <button class="go">查看安排</button>
+        </div>
+        <button class="record-link">＋ 记一件事</button>
+        <div class="ask">
+          <div class="n">2<small> 项待问</small></div>
+          <div class="row"><span class="who">服药后头晕 · 复诊是否要重新挂号</span><span class="lk">查看 →</span></div>
+        </div>
+        <div class="today">
+          <div class="cell"><span class="v">2<span class="of">/2</span></span><span class="k">血压已记录</span></div>
+          <div class="cell"><span class="v">14<span class="of">/14</span></span><span class="k">服药已记录</span></div>
+          <div class="cell"><span class="v">4<span class="of">/12</span></span><span class="k">测量天数</span></div>
+        </div>
+        <p class="foot">只按你选择的事项提醒，可随时关闭。本页提醒为演示模拟。</p>
+      </div>
+      <div class="nav"><div class="bar">
+        <a class="on" href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="16" height="14" stroke="#1C2B33" stroke-width="1.8"/><path d="M4 11h16M9 3v4M15 3v4" stroke="#1C2B33" stroke-width="1.8"/><path d="M8.5 16l2.2 2.2L15.5 13.5" stroke="#0C3F52" stroke-width="1.8"/></svg>安排</a>
+        <a href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 19.5h4L19.5 9a2.7 2.7 0 0 0-3.8-3.8L5 15.7l-.2 3.8z" stroke="#5B6B75" stroke-width="1.8" stroke-linejoin="miter"/><path d="M13.5 7l3.5 3.5" stroke="#5B6B75" stroke-width="1.8"/></svg>记录</a>
+        <a href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.5 12a7.5 7.5 0 1 1-2.1-5.2" stroke="#5B6B75" stroke-width="1.8"/><path d="M19.5 3.8v3.6h-3.6" stroke="#5B6B75" stroke-width="1.8"/></svg>复诊</a>
+      </div></div>
+    </div></div>
+    <div class="notes">
+      <p class="cap">01 · 安排首页 —— 用对比度立主次</p>
+      <div class="note"><span class="no">1</span><p class="tx"><b>「下一件事」升格为深青主卡</b>：白字压深底，一张卡拿下全屏 80% 的注意力。v0.1 所有卡片同权重，主角不突出。<span class="r">军规 04 弱化配角</span></p></div>
+      <div class="note"><span class="no">2</span><p class="tx"><b>宋体页标题</b>：中文宋体自带「单据、病历、公函」的字体记忆，一眼区别于通用 App。<span class="r">军规 01 个性</span></p></div>
+      <div class="note"><span class="no">3</span><p class="tx"><b>导航图标弃用默认圆润风格</b>：自绘方形笔触 1.8px 图标，「安排」带对勾细节，选中态为深青实底——一套自己的图标语言。<span class="r">军规 24</span></p></div>
+      <div class="note"><span class="no">4</span><p class="tx"><b>今日记录改为三格数据</b>：等宽表格数字 4/12（不凑整），状态一目了然且诚实——只报事实，不报情绪。<span class="r">军规 23 真数据</span></p></div>
+      <div class="note"><span class="no">5</span><p class="tx"><b>记一件事用虚线框</b>：轻、随时可走的入口，与主卡形成实/虚对比。<span class="r">军规 06 按钮金字塔</span></p></div>
+    </div>
+  </div>
+
+  <!-- ============ 屏 2：记一件事 ============ -->
+  <div class="exhibit">
+    <div class="phone"><div class="scr">
+      <div class="st"><span>9:41</span><span class="sim">合成演示</span><span>5G</span></div>
+      <div class="body">
+        <div>
+          <p class="eyebrow" style="margin:0 0 6px">高血压随访</p>
+          <h3 class="pt">记一件事</h3>
+          <p class="sub">先存原话，去向稍后再选</p>
+        </div>
+        <div class="qcard">
+          <p class="cap">你 的 原 话 · 11 月 5 日 20:12</p>
+          <p class="quote">「今天吃完药有点晕乎，是不是药不对。」</p>
+          <p class="time">发生时间：刚刚 · <span style="color:var(--teal);font-weight:600">修改</span></p>
+        </div>
+        <div class="ai">
+          <p class="cap">AI 整理 · 待你核对</p>
+          <p class="txt">「服药第 3 天出现过一次轻微头晕，想确认是否与用药有关、需要怎么处理。」</p>
+        </div>
+        <div class="btns">
+          <button class="b1">采用这段表达</button>
+          <button class="b2">保留原话</button>
+          <button class="b2" style="font-weight:600">查看已核实的联系渠道 →</button>
+        </div>
+        <p class="warmnote"><b>仅自己保存的记录不会出现在任何对外摘要里。</b>保存后可选：加入复诊待问 / 查看渠道 / 仅自己保存。</p>
+      </div>
+      <div class="nav"><div class="bar">
+        <a href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="16" height="14" stroke="#5B6B75" stroke-width="1.8"/><path d="M4 11h16M9 3v4M15 3v4" stroke="#5B6B75" stroke-width="1.8"/><path d="M8.5 16l2.2 2.2L15.5 13.5" stroke="#5B6B75" stroke-width="1.8"/></svg>安排</a>
+        <a class="on" href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 19.5h4L19.5 9a2.7 2.7 0 0 0-3.8-3.8L5 15.7l-.2 3.8z" stroke="#fff" stroke-width="1.8" stroke-linejoin="miter"/><path d="M13.5 7l3.5 3.5" stroke="#fff" stroke-width="1.8"/></svg>记录</a>
+        <a href="#" onclick="return false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.5 12a7.5 7.5 0 1 1-2.1-5.2" stroke="#5B6B75" stroke-width="1.8"/><path d="M19.5 3.8v3.6h-3.6" stroke="#5B6B75" stroke-width="1.8"/></svg>复诊</a>
+      </div></div>
+    </div></div>
+    <div class="notes">
+      <p class="cap">02 · 记一件事 —— 用户的情绪空间</p>
+      <div class="note"><span class="no">1</span><p class="tx"><b>原话用宋体＋暖褐左线</b>：衬线大字＝「这是你亲笔写的」。AI 整理用无衬线冷青底，两种来源在字体层面就分得开——不用读内容就知道哪句是谁说的。<span class="r">军规 01/15</span></p></div>
+      <div class="note"><span class="no">2</span><p class="tx"><b>原话卡＝白底，AI 块＝青纸底</b>：无一处描边，用背景色阶分区。<span class="r">军规 19 慎用边框</span></p></div>
+      <div class="note"><span class="no">3</span><p class="tx"><b>隐私提示块用暖杏色</b>：全站唯一的暖区留给「仅自己保存」——界面上能感到这块是护着你的。<span class="r">折中方向已定</span></p></div>
+      <div class="note"><span class="no">4</span><p class="tx"><b>按钮金字塔</b>：实心（采用）→ 幽灵（保留）→ 纯文字（渠道链接）。v0.1 的两枚按钮曾经同等重量。<span class="r">军规 06</span></p></div>
+    </div>
+  </div>
+
+  <!-- ============ 屏 3：复诊沟通卡 ============ -->
+  <div class="exhibit">
+    <div class="phone"><div class="scr">
+      <div class="st"><span>9:41</span><span class="sim">合成演示</span><span>5G</span></div>
+      <div class="body">
+        <div>
+          <p class="eyebrow" style="margin:0 0 6px">复诊沟通卡 · 给医生看</p>
+          <h3 class="pt">复诊沟通卡</h3>
+        </div>
+        <div class="sheet">
+          <div class="head">
+            <div><p class="t">陈淑兰 · 高血压随访</p><p class="d">周期 11 月 2 日 — 11 月 16 日 · 本页由患者本人核对</p></div>
+            <span class="stamp">本人已核对</span>
+          </div>
+          <div class="sec">
+            <h4>一、已有安排</h4>
+            <ol>
+              <li data-no="①">11 月 16 日复诊 · 全科门诊（时间待确认）<span class="q">携带家庭血压记录</span></li>
+            </ol>
+          </div>
+          <div class="sec">
+            <h4>二、本人记录的变化</h4>
+            <ol>
+              <li data-no="①">血压监测：4 天有记录，其余未记录</li>
+              <li data-no="②">服药第 3 天出现过一次轻微头晕<span class="q">今天吃完药有点晕乎，是不是药不对。</span></li>
+            </ol>
+          </div>
+          <div class="sec">
+            <h4>三、想问的问题</h4>
+            <ol>
+              <li data-no="①">头晕是否与用药有关？</li>
+              <li data-no="②">复诊是否要重新挂号？</li>
+            </ol>
+          </div>
+          <p class="cert">本人自述 · 非医学审核</p>
+        </div>
+        <div class="endrow">
+          <button class="b1">结束本轮并归档</button>
+          <p class="sheetfoot">归档将停止本轮全部软件提醒，不改变医嘱、不取消医院预约。</p>
+        </div>
+      </div>
+    </div></div>
+    <div class="notes">
+      <p class="cap">03 · 复诊沟通卡 —— 打印单据版</p>
+      <div class="note"><span class="no">1</span><p class="tx"><b>整体按「医院打印单」排版</b>：宋体标题、2px 粗头线、发丝分隔、①②编号、悬挂缩进——医生 30 秒扫完不用学。<span class="r">军规 11/12</span></p></div>
+      <div class="note"><span class="no">2</span><p class="tx"><b>朱砂「本人已核对」章</b>：全站唯一的红，只盖在患者亲手确认过的东西上——把产品最重要的语义做成了一个视觉仪式。<span class="r">军规 16/15</span></p></div>
+      <div class="note"><span class="no">3</span><p class="tx"><b>原话以「└ 原话：」回缩引用</b>：摘要行下直接给出处，医生想核对时视线不离开本行。<span class="r">军规 05</span></p></div>
+      <div class="note"><span class="no">4</span><p class="tx"><b>时间与数字全等宽</b>：单据感的一半来自整齐的数字列。<span class="r">军规 23</span></p></div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="rule">
+
+<h2><span class="no">叁</span>v0.1 → v0.2 关键改动与出处</h2>
+<table class="diff">
+  <tr><th style="width:120px">改动</th><th>怎么做</th><th style="width:210px">为什么（出处）</th></tr>
+  <tr><td>画布换纸感</td><td>冷灰蓝 #F5F7FA → 暖纸白 #FAF8F3，卡片靠色差浮起，去掉描边</td><td>「医疗备忘录」的本体是纸，不是屏幕玻璃（军规 19/02）</td></tr>
+  <tr><td>宋体进界面</td><td>页标题、原话引用、沟通卡小节题统一宋体；UI 正文仍无衬线</td><td>字体即身份：单据、病历、亲笔话（军规 01）</td></tr>
+  <tr><td>对比度立主次</td><td>首屏主卡深青底白字；次要内容加深灰但降权重</td><td>用户点名「颜色对比不够」（军规 04：弱化配角）</td></tr>
+  <tr><td>图标换语言</td><td>弃默认圆润图标，自绘方形笔触 1.8px 一套三枚，选中态深青实底</td><td>图标是语言不是默认值（军规 24）</td></tr>
+  <tr><td>间距分亲疏</td><td>组间距 24px / 组内距 9px，卡内不再堆同样 14px</td><td>军规 09</td></tr>
+  <tr><td>隐私暖区</td><td>杏纸色仅用于「仅自己保存」提示，别处不出现</td><td>折中方向（可信打底、温暖点缀）的落实</td></tr>
+  <tr><td>核对章</td><td>朱砂描边章「本人已核对」，全站唯一红色元素</td><td>核对语义的可视化仪式（军规 16/15）</td></tr>
+</table>
+
+<hr class="rule">
+
+<h2><span class="no">肆</span>来源与借鉴边界</h2>
+<div class="cites">
+  <b>方法来源：</b>《UI 设计军规》skill（ui-design-field-manual，26 条，方法底座为《Refactoring UI》的工程化视角）——用于本方案的规则编号与自检。<br>
+  <b>哲学来源：</b>立正 Open Context（<a href="https://github.com/sunyuzheng/lizheng-open-context">github.com/sunyuzheng/lizheng-open-context</a> · <a href="https://www.superlinear.academy/c/tools/lizheng-context">superlinear.academy/c/tools/lizheng-context</a>）——「做小，但要真」「先说清结果，再讨论工具」。<b>声明：立正本人未参与本项目</b>，此处仅使用其公开发布的思考透镜（CC BY 4.0 范围内的观点引用），视觉方案与立正无关联。<br>
+  <b>结构参考：</b>NHS 设计系统（卡片/错误反馈，v1.0 已引）；中文宋体排版惯例参照报刊公函，无第三方代码依赖。<br>
+  <b>数据边界：</b>陈淑兰为虚构合成角色，符合赛题数据红线；本页为静态设计陈列，非可交互软件。
+</div>
+
+</div>
+</body>
+</html>
