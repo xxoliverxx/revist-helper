@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>诊后助手 · 需求确定版 v1.4（合成数据 · 双周期 · 主界面每日任务 · 归档回首页与归档记录）</title>
+<title>诊后助手 · 需求确定版 v1.5（合成数据 · 双周期 · 统一历史记录导出：记录/沟通卡/完整周期资料）</title>
 <style>
 /* ===== 设计令牌 v0.2「纸感备忘录」（沿用） ===== */
 :root{
@@ -62,8 +62,11 @@ button{font-family:inherit}
 .banner.ok{background:#EEF6EF;color:#2E6B4F}
 
 /* 周期条 + 操作人 */
-.cyclebar{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--teal-tint);border-radius:9px;padding:9px 12px;font-size:12px;color:var(--teal);line-height:1.5}
-.cyclebar .who{font-weight:600;white-space:nowrap}
+.cyclebar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;background:var(--teal-tint);border-left:3px solid var(--teal);border-radius:9px;padding:11px 13px;font-size:12px;color:var(--teal);line-height:1.55}
+.cyclebar .cyc{display:flex;flex-direction:column;gap:1px}
+.cyclebar .cyc .lbl{font-size:10.5px;letter-spacing:.14em;color:var(--teal);opacity:.62;font-weight:600}
+.cyclebar .cyc .val{font-size:13.5px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.cyclebar .who{align-self:center;flex-shrink:0;font-size:12px;font-weight:500;color:var(--ink-2);background:#fff;border:1px solid var(--hair);border-radius:99px;padding:4px 11px;white-space:nowrap}
 
 /* 出处块 */
 .srccard{background:var(--teal-tint);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:7px}
@@ -102,10 +105,22 @@ button{font-family:inherit}
 .today .k{font-size:11px;color:var(--ink-2);letter-spacing:.1em}
 
 /* 记录页 */
-.voicebtn{height:64px;border-radius:14px;border:2px dashed var(--teal);background:#fff;color:var(--teal);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;padding:0 12px;text-align:center}
-.voicebtn.rec{border-style:solid;background:var(--teal);color:#fff}
-.voicebtn .mic{width:20px;height:20px;flex-shrink:0}
-.wave{display:none;gap:3px;align-items:center}
+.voicebtn{width:100%;min-height:76px;border-radius:16px;border:1px solid var(--teal);background:linear-gradient(180deg,#F3F8F9 0%,var(--teal-tint) 100%);color:var(--teal);display:flex;align-items:center;gap:14px;cursor:pointer;padding:16px 18px;text-align:left;box-shadow:0 1px 0 rgba(28,43,51,.04),0 4px 14px rgba(12,63,82,.06);transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.voicebtn:hover{transform:translateY(-1px);box-shadow:0 2px 0 rgba(28,43,51,.05),0 8px 22px rgba(12,63,82,.10)}
+.voicebtn:active{transform:translateY(0);box-shadow:0 1px 0 rgba(28,43,51,.04),0 2px 6px rgba(12,63,82,.08)}
+.voicebtn .mic-wrap{flex-shrink:0;width:46px;height:46px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(12,63,82,.28)}
+.voicebtn .mic{width:21px;height:21px;flex-shrink:0}
+.voicebtn .vtxt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.voicebtn .vtxt .vmain{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink);line-height:1.35;letter-spacing:.01em}
+.voicebtn .vtxt .vsub{font-size:12px;color:var(--ink-2);line-height:1.35}
+.voicebtn .go{flex-shrink:0;color:var(--teal);opacity:.7;display:flex;align-items:center}
+.voicebtn .go svg{width:16px;height:16px}
+.voicebtn.rec{border-color:var(--teal-deep);background:var(--teal);color:#fff}
+.voicebtn.rec .mic-wrap{background:#fff;color:var(--teal);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.voicebtn.rec .vtxt .vmain{color:#fff}
+.voicebtn.rec .vtxt .vsub{color:rgba(255,255,255,.82)}
+.voicebtn.rec .go{display:none}
+.wave{display:none;gap:4px;align-items:center;margin-left:auto}
 .voicebtn.rec .wave{display:flex}
 .wave i{width:3px;background:#fff;border-radius:2px;animation:wv .9s ease-in-out infinite}
 .wave i:nth-child(1){height:8px}.wave i:nth-child(2){height:16px;animation-delay:.15s}.wave i:nth-child(3){height:11px;animation-delay:.3s}.wave i:nth-child(4){height:14px;animation-delay:.45s}
@@ -114,8 +129,17 @@ button{font-family:inherit}
 .errmsg{font-size:12.5px;color:var(--seal);display:none}
 .errmsg.show{display:block}
 .painrow{display:flex;flex-wrap:wrap;gap:8px}
-.painrow button{width:44px;height:44px;border-radius:9px;border:1.5px solid var(--hair);background:#fff;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink);cursor:pointer}
-.painrow button:hover{border-color:var(--teal);color:var(--teal)}
+.painrow button{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--hair);background:#fff;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink);cursor:pointer;position:relative;transition:transform .18s cubic-bezier(.34,1.56,.64,1),border-color .18s ease,background-color .18s ease,color .18s ease}
+.painrow button:hover{border-color:var(--teal);color:var(--teal);transform:translateY(-2px)}
+.painrow button:active{transform:scale(.9)}
+/* 疼痛色阶：0 无痛(冷青)→10 剧痛(暖红)，点击选中后按等级着色 */
+.painrow button[data-lv="0"],.painrow button[data-lv="1"],.painrow button[data-lv="2"]{--pc:#2E7D8A}
+.painrow button[data-lv="3"],.painrow button[data-lv="4"]{--pc:#4C8B77}
+.painrow button[data-lv="5"],.painrow button[data-lv="6"]{--pc:#C08A3E}
+.painrow button[data-lv="7"],.painrow button[data-lv="8"]{--pc:#C25A3C}
+.painrow button[data-lv="9"],.painrow button[data-lv="10"]{--pc:#B2402E}
+.painrow button.sel{border-color:var(--pc);background:var(--pc);color:#fff;font-weight:600;box-shadow:0 3px 10px rgba(28,43,51,.18);animation:pop .32s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(.82)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
 .bprow{display:flex;gap:8px;align-items:center}
 .bprow input{width:90px;height:48px;border-radius:9px;border:1.5px solid var(--hair);background:#fff;font-size:16px;font-variant-numeric:tabular-nums;text-align:center;font-family:inherit}
 .bprow .x{color:var(--ink-2)}
@@ -257,8 +281,18 @@ button{font-family:inherit}
 .sheet-modal h3{margin:0;font-size:17px;font-family:var(--serif)}
 .sheet-modal p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.7}
 .histlist{display:flex;flex-direction:column;gap:8px}
-.histlist .h{background:#F7F5F0;border-radius:9px;padding:10px 12px;font-size:13px;line-height:1.6}
-.histlist .h b{font-family:var(--serif)}
+.histlist .h{background:#F7F5F0;border-radius:11px;padding:12px 13px;font-size:13px;line-height:1.55;display:flex;flex-direction:column;gap:4px}
+.histlist .h b{font-family:var(--serif);font-size:15px}
+.histlist .h.empty{color:var(--ink-2);background:transparent;border:1px dashed var(--hair)}
+.histlist .hsec{font-size:11px;letter-spacing:.14em;color:var(--ink-2);font-weight:600;margin:6px 2px 0}
+.histlist .hhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.histlist .hbadge{flex-shrink:0;font-size:11px;font-weight:600;color:var(--teal);background:var(--teal-tint);border-radius:99px;padding:2px 9px}
+.histlist .hbadge.live{color:var(--brown);background:var(--apricot)}
+.histlist .hmeta{font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+.histlist .hstat{font-size:11.5px;color:var(--ink-2)}
+.histlist .hfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.histlist .hts{font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.histlist .hnote{font-size:11.5px;color:var(--ink-2);line-height:1.6;padding:2px 4px}
 
 /* 周期创建 */
 .cycleform{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px}
@@ -307,10 +341,18 @@ button{font-family:inherit}
 .photoitem .pacts{display:flex;gap:12px;padding:0 10px 9px}
 .photoitem .pacts button{font-size:12px;color:var(--teal);background:none;border:none;cursor:pointer;padding:0;font-weight:600}
 .photoitem .pacts button.del{color:var(--seal)}
-.photoentry{display:flex;flex-direction:column;gap:10px;background:#fff;border:1px dashed var(--teal);border-radius:12px;padding:14px}
+.photoentry{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:16px}
 .photoentry .lab{font-size:14px;font-weight:600}
-.photoentry input[type=file]{font-size:12.5px;color:var(--ink-2)}
-.care-note{background:var(--apricot);border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.65;color:var(--brown)}
+/* 自定义上传热区：替代裸露的原生 file input */
+.photoentry{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:16px}
+.photoentry .lab{font-size:14px;font-weight:600}
+.photofile{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.photofile input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+.photofile .pf-name{font-size:12.5px;color:var(--ink-2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photofile .pf-name.has{color:var(--teal);font-weight:600}
+.photoentry .field{margin-top:2px}
+.care-note{background:var(--apricot);border-radius:9px;padding:10px 12px;font-size:12px;line-height:1.65;color:var(--brown);display:flex;gap:8px}
+.care-note svg{width:15px;height:15px;flex-shrink:0;margin-top:2px;opacity:.75}
 
 /* ===== v1.1 新增：检查资料 ===== */
 .docitem{background:#fff;border:1px solid var(--hair);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
@@ -326,6 +368,15 @@ button{font-family:inherit}
 .taskpick{display:flex;gap:8px;flex-wrap:wrap}
 .taskpick button{font-size:12.5px;border:1.5px solid var(--hair);background:#fff;color:var(--ink-2);border-radius:8px;padding:7px 11px;cursor:pointer;text-align:left}
 .taskpick button.on{border-color:var(--teal);color:var(--teal);font-weight:600}
+/* v1.5 统一导出 */
+.expline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-2);margin:2px 0}
+.expprev{background:var(--paper);border:1px solid var(--hair);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.expprev b{font-size:13.5px;color:var(--ink)}
+.expwarn{background:#FBF3E4;border:1px solid #E8D9B8;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#8A6A1F;line-height:1.5;margin:8px 0}
+.expempty{font-size:13px;color:var(--ink-2);padding:10px 0;text-align:center}
+.expopt{display:flex;flex-direction:column;gap:8px;margin:6px 0}
+.expopt .selrow{margin:0}
+.histlist .h .minibtn{margin-left:auto;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -397,7 +448,10 @@ button{font-family:inherit}
 
     <!-- S01 首页 -->
     <section class="screen" id="s-home">
-      <div class="cyclebar"><span id="cycle-label">本轮：术后出院 · 11 月 5 日出院 → 复诊日期待核对</span><span class="who" id="role-badge">操作人：周雯（女儿 · 代记）</span></div>
+      <div class="cyclebar">
+        <div class="cyc"><span class="lbl">本轮周期</span><span class="val" id="cycle-label">术后出院 · 11 月 5 日出院 → 复诊日期待核对</span></div>
+        <span class="who" id="role-badge">操作人：周雯（女儿 · 代记）</span>
+      </div>
       <div>
         <p class="eyebrow" style="margin:0 0 6px" id="home-eyebrow">踝关节骨折术后 · 拆线前 2 天</p>
         <h2 class="pt">当前安排</h2>
@@ -456,8 +510,14 @@ button{font-family:inherit}
         <p class="sub">先保存原话，去向稍后再选</p>
       </div>
       <button class="voicebtn" id="voice-btn">
-        <svg class="mic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="3" width="6" height="11" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7" stroke="currentColor" stroke-width="1.8"/></svg>
-        <span id="voice-label">按一下，用说话记一件事（演示模拟）</span>
+        <span class="mic-wrap">
+          <svg class="mic" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="3" width="6" height="11" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7" stroke="currentColor" stroke-width="1.8"/></svg>
+        </span>
+        <span class="vtxt">
+          <span class="vmain" id="voice-label">按一下，用说话记一件事</span>
+          <span class="vsub">演示模拟，不真正录音</span>
+        </span>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         <span class="wave"><i></i><i></i><i></i><i></i></span>
       </button>
       <div class="divider"></div>
@@ -495,6 +555,13 @@ button{font-family:inherit}
       <div class="filters" id="hist-filters"></div>
       <div id="hist-trend"></div>
       <div class="list" id="hist-list"></div>
+      <!-- v1.5 导出入口：不在每日录入主流程内，放历史区末尾 -->
+      <div class="divider"></div>
+      <div class="card" style="gap:4px;padding:12px 14px">
+        <span style="font-size:14px;font-weight:600">导出历史记录</span>
+        <span style="font-size:12.5px;color:var(--ink-2)">把你记录的数据导出为 Markdown（数值可选 CSV）文件，保存在自己手里。私人记录默认不导出。</span>
+        <button class="btn b2" id="btn-export-rec" style="margin-top:4px">导出记录…</button>
+      </div>
     </section>
 
     <!-- S05 疑问与 AI 整理 -->
@@ -566,6 +633,12 @@ button{font-family:inherit}
       <div id="doc-block"></div>
 
       <button class="link center" id="btn-hist">查看历史周期</button>
+      <div class="divider"></div>
+      <div class="card" style="gap:4px;padding:12px 14px">
+        <span style="font-size:14px;font-weight:600">导出本轮资料（留档/携带）</span>
+        <span style="font-size:12.5px;color:var(--ink-2)">导出本轮从就诊到复诊的全部诊后管理资料（医嘱、执行、记录、待问、附件索引）。与导出沟通卡不同，导出原始数据不需要先核对摘要。</span>
+        <button class="btn b2" id="btn-export-cycle" style="margin-top:4px">导出本轮资料…</button>
+      </div>
     </section>
 
     <!-- S07b 逐条核对 -->
@@ -612,6 +685,7 @@ button{font-family:inherit}
       <div id="card-photo"></div>
       <div id="card-doc"></div>
       <button class="btn b2" id="clinic-toggle">开启诊室模式（字号放大 · 问题逐条勾选）</button>
+      <button class="btn b2" id="btn-export-card">导出沟通卡（Markdown）</button>
       <button class="btn b1" id="btn-archive">结束本轮并归档</button>
       <button class="btn b2" data-go="review">返回修改</button>
       <p class="footnote">归档将停止本轮全部软件提醒，不表示治疗结束，不取消医院预约。</p>
@@ -649,7 +723,7 @@ button{font-family:inherit}
   <div class="modal" id="hist-modal">
     <div class="sheet-modal">
       <h3>历史周期（只读）</h3>
-      <div class="histlist" id="hist-list"></div>
+      <div class="histlist" id="histmodal-list"></div>
       <button class="btn b2" id="btn-hist-close">关闭</button>
     </div>
   </div>
@@ -660,7 +734,18 @@ button{font-family:inherit}
       <h3 id="img-modal-title">伤口照片</h3>
       <img id="img-modal-full" style="max-width:100%;max-height:52vh;border-radius:10px;border:1px solid var(--hair)" alt="照片原图">
       <p id="img-modal-meta" style="font-size:12px"></p>
+      <button class="btn b2" id="img-modal-dl" style="display:none">下载原件</button>
       <button class="btn b2" id="img-modal-close">关闭</button>
+    </div>
+  </div>
+
+  <!-- v1.5 统一导出弹窗（B 记录导出 / C 沟通卡导出 / C 完整周期资料导出共用） -->
+  <div class="modal" id="export-modal">
+    <div class="sheet-modal">
+      <h3 id="exp-title">导出</h3>
+      <div id="exp-body"></div>
+      <button class="btn b1" id="btn-exp-go">确认导出并下载</button>
+      <button class="btn b2" id="btn-exp-cancel">取消</button>
     </div>
   </div>
 
@@ -773,7 +858,7 @@ function freshHyper(){
   };
 }
 var SC = { ortho:freshOrtho(), hyper:freshHyper() };
-var UI = { current:"cycle", detailKey:null, confirmed:false, stale:false, fixed1:false, fixed2:false, clinicOn:false, filter:"all", histFilter:"all", histCond:"", photoDescr:"", docCond:"", pendingDel:null };
+var UI = { current:"cycle", detailKey:null, confirmed:false, confirmedAt:null, stale:false, fixed1:false, fixed2:false, clinicOn:false, filter:"all", histFilter:"all", histCond:"", photoDescr:"", docCond:"", pendingDel:null };
 
 /* ================= v1.1 持久化层（localStorage，仅本设备） ================= */
 var LS_PREFIX = "zhz_revist_v1_";
@@ -871,7 +956,7 @@ function checkDone(){ if(D().cards.every(function(c){return c.verified;})) toast
 function renderHome(){
   var d=D();
   $("home-eyebrow").textContent=d.eyebrow;
-  $("cycle-label").textContent=d.cycleLabel;
+  $("cycle-label").textContent=d.cycleLabel.replace(/^本轮：/,"");
   $("role-badge").textContent="操作人："+d.role;
   var al=$("home-alert");
   if(d.alert){ al.innerHTML='<div class="card alertcard"><span class="cap">'+esc(d.alert.cap)+'</span><span class="txt">'+esc(d.alert.txt)+'</span><span class="footnote">'+esc(d.alert.src)+'</span></div>'; }
@@ -951,12 +1036,18 @@ function renderRecord(){
   var tb=$("tpl-block");
   if(d.tplType==="pain"){
     tb.innerHTML='<span style="font-size:14px;font-weight:600">'+esc(d.tplTitle)+'</span><div class="painrow" id="painrow">'+
-      [0,1,2,3,4,5,6,7,8,9,10].map(function(n){return '<button>'+n+'</button>';}).join("")+'</div><p class="footnote">评分只做记录；不解释严重程度。</p>';
+      [0,1,2,3,4,5,6,7,8,9,10].map(function(n){return '<button data-lv="'+n+'">'+n+'</button>';}).join("")+'</div><p class="footnote">评分只做记录；不解释严重程度。点一下试试：色块会按疼痛等级着色。</p>';
     tb.querySelectorAll("#painrow button").forEach(function(b){ b.addEventListener("click", function(){
-      var now=nowTs();
-      d.painN++; d.records.unshift({type:"pain",meta:"疼痛评分 · 刚刚",chips:[],txt:"评分 "+b.textContent+"（0-10）",priv:false});
-      d.measurements.push({id:uid(), kind:"pain", value:+b.textContent, unit:"分", condition:"", ts:now, desc:"", note:""});
-      afterNewRecord("已记录评分 "+b.textContent+"，不做任何判断"); renderRecord(); renderHome();
+      // 先给色块选中态动画，让用户看到「色块改变」，再短暂停留后落库
+      tb.querySelectorAll("#painrow button").forEach(function(x){x.classList.remove("sel");});
+      b.classList.add("sel");
+      var lv=+b.textContent;
+      setTimeout(function(){
+        var now=nowTs();
+        d.painN++; d.records.unshift({type:"pain",meta:"疼痛评分 · 刚刚",chips:[],txt:"评分 "+lv+"（0-10）",priv:false});
+        d.measurements.push({id:uid(), kind:"pain", value:lv, unit:"分", condition:"", ts:now, desc:"", note:""});
+        afterNewRecord("已记录评分 "+lv+"，不做任何判断"); renderRecord(); renderHome();
+      }, 320);
     }); });
   } else {
     tb.innerHTML='<span style="font-size:14px;font-weight:600">'+esc(d.tplTitle)+'</span><div class="bprow"><input id="bp-sys" inputmode="numeric" placeholder="132"><span class="x">/</span><input id="bp-dia" inputmode="numeric" placeholder="78"><button class="btn b2" id="bp-save">记录</button></div><p class="footnote">按日期列出数值，不判断控制效果。</p>';
@@ -1183,12 +1274,16 @@ function renderPhotoBlock(){
   var photos=(d.photos||[]).slice().sort(function(a,b){ return a.ts<b.ts?1:-1; });
   var h='<div class="divider"></div>'+
     '<div class="row"><span style="font-size:14px;font-weight:600">伤口照片记录</span><span class="footnote">'+(photos.length? photos.length+" 条":"可选")+'</span></div>'+
-    '<div class="care-note">拍照请遵循原有伤口护理医嘱，不要为了拍照擅自拆除敷料；照片仅作客观记录与复诊沟通材料。</div>'+
+    '<div class="care-note"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v4M12 17h.01M10.3 3.8L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>拍照请遵循原有伤口护理医嘱，不要为了拍照擅自拆除敷料；照片仅作客观记录与复诊沟通材料。</span></div>'+
     '<div class="photoentry">'+
-      '<span class="lab">新增照片（拍照或从相册选择）</span>'+
-      '<input type="file" accept="image/*" id="photo-file">'+
-      '<textarea class="field" id="photo-desc" rows="2" placeholder="可选：补充一句描述（如「拆线前第3天，伤口干燥」）" style="min-height:48px"></textarea>'+
-      '<button class="btn b2" id="photo-save">保存照片</button>'+
+      '<span class="lab">新增照片</span>'+
+      '<div class="photofile">'+
+        '<label class="btn b2" for="photo-file" style="text-align:center;cursor:pointer">选择文件</label>'+
+        '<input type="file" accept="image/*" id="photo-file">'+
+        '<span class="pf-name" id="pf-name">未选择文件</span>'+
+      '</div>'+
+      '<textarea class="field" id="photo-desc" rows="2" placeholder="补充一句描述（如「拆线前第 3 天，伤口干燥」）" style="min-height:48px"></textarea>'+
+      '<button class="btn b1" id="photo-save">保存照片</button>'+
     '</div>';
   if(photos.length){
     h+='<div class="photorow">'+photos.map(function(p){
@@ -1201,7 +1296,17 @@ function renderPhotoBlock(){
   }
   pb.innerHTML=h;
   var pf=$("photo-file");
-  if(pf) pf.addEventListener("change", function(){ /* 读取由保存按钮处理 */ });
+  if(pf) pf.addEventListener("change", function(){
+    var f=pf.files && pf.files[0];
+    var nameEl=$("pf-name");
+    if(f && nameEl){
+      nameEl.textContent=f.name;
+      nameEl.classList.add("has");
+    } else if(nameEl){
+      nameEl.textContent="未选择文件";
+      nameEl.classList.remove("has");
+    }
+  });
   var ps=$("photo-save");
   if(ps) ps.addEventListener("click", function(){
     var file=pf.files && pf.files[0];
@@ -1229,6 +1334,7 @@ function renderPhotoBlock(){
 }
 function viewPhoto(id){
   var d=D(); var p=(d.photos||[]).filter(function(x){return x.id===id;})[0]; if(!p) return;
+  var dl=$("img-modal-dl"); if(dl) dl.style.display="none";
   $("img-modal-title").textContent="伤口照片";
   $("img-modal-full").src=p.data;
   $("img-modal-meta").textContent=p.ts+(p.desc?" · "+p.desc:"");
@@ -1280,6 +1386,7 @@ function renderMedPhoto(c){
 }
 function viewMedPhotoFull(c){
   if(!c.medPhoto) return;
+  var dl=$("img-modal-dl"); if(dl) dl.style.display="none";
   $("img-modal-title").textContent="药品对照照片";
   $("img-modal-full").src=c.medPhoto.data;
   $("img-modal-meta").textContent=(c.medPhoto.ts||"")+" · 仅作拿药对照，药品信息以医嘱原文为准";
@@ -1365,8 +1472,27 @@ function renderDocBlock(){
 }
 function viewDoc(id){
   var d=D(); var dc=(d.docs||[]).filter(function(x){return x.id===id;})[0]; if(!dc) return;
+  var dl=$("img-modal-dl");
+  if(dl){
+    dl.style.display="";
+    dl.onclick=function(){
+      try{
+        var a=document.createElement("a"); a.href=dc.data; a.download=dc.name;
+        document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); }, 800);
+        toast("已开始下载原件："+dc.name);
+      }catch(e){ toast("下载失败："+(e&&e.message||e)); }
+      try{ window.__lastDocDl={name:dc.name}; }catch(e){}
+    };
+  }
   if(dc.kind && dc.kind.indexOf("pdf")>=0){
     // PDF 展示为新窗口查看 dataURL（演示）
+    if(dl){ dl.style.display=""; dl.onclick=function(){
+      try{
+        var a=document.createElement("a"); a.href=dc.data; a.download=dc.name+".pdf";
+        document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); }, 800);
+        toast("已开始下载原件："+dc.name+".pdf");
+      }catch(e){ toast("下载失败："+(e&&e.message||e)); }
+    }; }
     toast("PDF 原件已准备（演示：真实打开需浏览器支持 PDF 预览）");
     return;
   }
@@ -1557,9 +1683,9 @@ $("enter-home").addEventListener("click", function(){ renderHome(); show("home")
 var voiceBusy=false;
 $("voice-btn").addEventListener("click", function(){
   if(voiceBusy||D().archived) return; voiceBusy=true;
-  $("voice-btn").classList.add("rec"); $("voice-label").textContent="正在听…（演示 2 秒）";
+  $("voice-btn").classList.add("rec"); $("voice-label").textContent="正在听…";
   setTimeout(function(){
-    $("voice-btn").classList.remove("rec"); $("voice-label").textContent="按一下，用说话记一件事（演示模拟）"; voiceBusy=false;
+    $("voice-btn").classList.remove("rec"); $("voice-label").textContent="按一下，用说话记一件事"; voiceBusy=false;
     D().records.unshift({type:"quote",meta:"语音 · 刚刚",chips:[],txt:D().voiceQuote,priv:false});
     afterNewRecord("语音原话已保存（演示模拟，未转写）");
     renderRecord(); renderHome(); renderSelect();
@@ -1646,7 +1772,7 @@ $("tpl-list").querySelectorAll(".add").forEach(function(b){ b.addEventListener("
 /* 摘要流程 */
 $("btn-gen").addEventListener("click", function(){ genReview(); show("review"); toast("草稿由程序汇总生成，逐条核对"); });
 $("btn-confirm-sum").addEventListener("click", function(){
-  UI.confirmed=true; renderCard();
+  UI.confirmed=true; UI.confirmedAt=nowTs(); renderCard();
   $("sum-status").textContent=(UI.fixed1||UI.fixed2)?"本人已核对 · 已修正":"本人已核对";
   toast("已生成展示版；之后新增记录会提示待重新核对");
   show("card");
@@ -1694,16 +1820,38 @@ $("btn-newcycle").addEventListener("click", function(){
 $("btn-hist").addEventListener("click", function(){
   var log=loadArchLog();
   var rows="";
+  // 一段：真实归档记录（含归档时间与执行统计）
   if(log.length){
-    rows=log.map(function(e){
-      return '<div class="h"><b>'+esc(e.who)+' · 已归档</b> · '+esc(e.ts)+'<br>'+esc(e.label)+'<br><span style="font-size:11.5px;color:var(--ink-2)">归档时：执行记录 '+e.med+' 次 · 待问 '+e.q+' 项 · 本轮软件提醒已停止</span></div>';
+    rows+='<div class="hsec">已归档记录</div>';
+    rows+=log.map(function(e){
+      var key = (e.who==="陈淑兰") ? "hyper" : "ortho";
+      return '<div class="h">'+
+        '<div class="hhead"><b>'+esc(e.who)+'</b><span class="hbadge">已归档</span></div>'+
+        '<div class="hmeta">'+esc(e.label.replace(/^本轮：/,""))+'</div>'+
+        '<div class="hstat">归档时：执行记录 '+e.med+' 次 · 待问 '+e.q+' 项 · 提醒已停止</div>'+
+        '<div class="hfoot"><span class="hts">'+esc(e.ts)+'</span><button class="minibtn" data-expcycle="'+key+'">导出该轮资料</button></div>'+
+      '</div>';
     }).join("");
   } else {
-    rows='<div class="h" style="color:var(--ink-2)">尚无已归档周期；点「结束本轮并归档」后，这里会留下只读的归档记录。</div>';
+    rows+='<div class="h empty">尚无已归档周期；点「结束本轮并归档」后，这里会留下只读的归档记录。</div>';
   }
-  rows+='<div class="h"><b>高血压周期（陈淑兰）</b> · '+(SC.hyper.archived?"已归档":"进行中")+'<br>11 月 2 日 — 11 月 16 日 · 血压 '+(SC.hyper.bpN||4)+' 次记录 · 待问 '+SC.hyper.questions.length+' 项</div>'+
-    '<div class="h"><b>骨科周期（周建国）</b> · '+(SC.ortho.archived?"已归档":"进行中")+'<br>11 月 5 日 — 11 月 19 日 · 用药 '+SC.ortho.medLogs+' 次记录 · 待问 '+SC.ortho.questions.length+' 项<br><span style="font-size:11.5px;color:var(--ink-2)">归档周期只读；旧医嘱不自动带入新周期。</span></div>';
-  $("hist-list").innerHTML=rows;
+  // 二段：当前进行中的周期（只列未归档的，避免与归档记录重复）
+  var active=[];
+  if(!SC.hyper.archived) active.push({key:"hyper", name:"高血压周期（陈淑兰）", range:"11 月 2 日 — 11 月 16 日", stat:"血压 "+(SC.hyper.bpN||4)+" 次记录 · 待问 "+SC.hyper.questions.length+" 项"});
+  if(!SC.ortho.archived) active.push({key:"ortho", name:"骨科周期（周建国）", range:"11 月 5 日 — 11 月 19 日", stat:"用药 "+SC.ortho.medLogs+" 次记录 · 待问 "+SC.ortho.questions.length+" 项"});
+  if(active.length){
+    rows+='<div class="hsec">进行中的周期</div>';
+    rows+=active.map(function(a){
+      return '<div class="h">'+
+        '<div class="hhead"><b>'+esc(a.name)+'</b><span class="hbadge live">进行中</span></div>'+
+        '<div class="hmeta">'+a.range+'</div>'+
+        '<div class="hstat">'+a.stat+'</div>'+
+        '<div class="hfoot"><span class="hts">可导出当前数据</span><button class="minibtn" data-expcycle="'+a.key+'">导出该轮资料</button></div>'+
+      '</div>';
+    }).join("");
+  }
+  rows+='<div class="hnote">归档周期只读；旧医嘱不自动带入新周期。若某轮已开新周期覆盖原数据，导出时将如实标注，不会伪造缺失数据。</div>';
+  $("histmodal-list").innerHTML=rows;
   $("hist-modal").classList.add("open");
 });
 $("btn-hist-close").addEventListener("click", function(){ $("hist-modal").classList.remove("open"); });
@@ -1763,7 +1911,379 @@ $("btn-reset").addEventListener("click", function(){
   location.reload();
 });
 
-/* ================= 总渲染与启动 ================= */
+/* ================= v1.5 统一导出（B 记录 / C 沟通卡 / C 完整周期资料，共用同一套数据组装） =================
+   设计约束（对应需求稿 §7）：
+   - 只读 SC 共享数据模型，B/C 不各自另存历史副本；原始记录增删后重新导出即反映最新数据。
+   - 私人记录默认不包含，主动包含时须用户明确勾选并预览。
+   - 导出不调用 AI、不做任何医学评价；未记录 ≠ 未执行。
+   - 附件只导出元数据与标识，原件未打包时明确说明。 */
+var EX={kind:null, scope:"cycle", cycleKey:null, fmt:"md", msel:{num:true,txt:true}, priv:false, sections:{plan:true,act:true,obs:true,que:true,card:true,att:true}};
+
+function expNow(){ var t=new Date(); function p(n){return (n<10?"0":"")+n;} return t.getFullYear()+"-"+p(t.getMonth()+1)+"-"+p(t.getDate())+" "+p(t.getHours())+":"+p(t.getMinutes()); }
+function expStampFile(){ var t=new Date(); function p(n){return (n<10?"0":"")+n;} return t.getFullYear()+p(t.getMonth()+1)+p(t.getDate())+"_"+p(t.getHours())+p(t.getMinutes()); }
+function mdEsc(s){ return String(s==null?"":s).replace(/\|/g,"／").replace(/\r?\n/g," "); }
+function csvCell(s){ var v=String(s==null?"":s); return '"'+v.replace(/"/g,'""')+'"'; }
+
+/* 范围解析：当前周期 / 全部周期（两个演示周期） */
+function expCycleKeys(){
+  if(EX.kind==="cycle" && EX.cycleKey) return [EX.cycleKey];
+  if(EX.scope==="all") return (active==="ortho"? ["ortho","hyper"] : ["hyper","ortho"]);
+  return [active];
+}
+function expCycleMeta(k){ var d=SC[k]; return {key:k, person:d.person, role:d.roleShort, label:d.cycleLabel, archived:!!d.archived}; }
+
+/* 共用数据组装：B 记录导出与 C 周期资料导出都从这几个 collector 取数，只是筛选和排版不同 */
+function colMeasurements(cks){ var out=[]; cks.forEach(function(k){ var d=SC[k]; (d.measurements||[]).forEach(function(m){ out.push({ck:k, id:m.id, kind:kindMeta(m.kind).name, ts:m.ts, value:m.value, sys:m.sys, dia:m.dia, unit:m.unit, condition:m.condition||"", desc:m.desc||"", note:m.note||""}); }); }); return out; }
+function colNotes(cks){ var out=[]; cks.forEach(function(k){ var d=SC[k]; (d.records||[]).forEach(function(r){ out.push({ck:k, txt:r.txt, meta:r.meta, priv:!!r.priv}); }); }); return out; }
+function colPhotos(cks){ var out=[]; cks.forEach(function(k){ var d=SC[k]; (d.photos||[]).forEach(function(p){ out.push({ck:k, id:p.id, ts:p.ts, desc:p.desc||""}); }); }); return out; }
+function colDocs(cks){ var out=[]; cks.forEach(function(k){ var d=SC[k]; var tasks=reviewTasks(d); (d.docs||[]).forEach(function(dc){ out.push({ck:k, id:dc.id, name:dc.name, type:docTypeName(dc.type), date:dc.date||"", ts:dc.ts, task:(dc.task!==""&&dc.task!=null)? (tasks[dc.task]||String(dc.task)) : ""}); }); }); return out; }
+
+/* 真实文件下载：Blob + a[download]；失败（如环境不支持）时给出准确错误，不只报成功 */
+function downloadFile(filename, text, mime){
+  try{
+    if(typeof URL==="undefined" || typeof URL.createObjectURL!=="function") throw new Error("当前浏览器不支持本地文件下载");
+    var blob=new Blob(["\ufeff"+text], {type:mime+";charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download=filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 1000);
+    toast("已生成文件："+filename);
+  }catch(e){ toast("导出失败："+(e&&e.message? e.message : e)); }
+  try{ window.__lastExport={filename:filename, text:text, mime:mime}; }catch(e){} /* 供自动化验收取内容 */
+}
+
+/* ---------- B：记录导出（Markdown / CSV） ---------- */
+function buildRecMd(){
+  var cks=expCycleKeys();
+  var ms=colMeasurements(cks);
+  var ns=colNotes(cks).filter(function(r){ return EX.priv || !r.priv; });
+  var ps=colPhotos(cks);
+  var L=[];
+  L.push("# 诊后记录导出");
+  L.push("");
+  L.push("- 导出时间："+expNow()+"（程序从本地记录生成，未经 AI 处理，不含医学评价）");
+  L.push("- 导出范围："+cks.length+" 个诊后周期"+(cks.length>1?"（按周期分段，不混淆来源）":""));
+  L.push("- 数据类型："+((EX.msel.num&&EX.msel.txt)?"全部日常记录":(EX.msel.num?"数值监测记录":"症状与文字记录")));
+  if(EX.priv) L.push("- **包含私人记录（用户主动选择导出，默认不包含）**");
+  else L.push("- 私人记录：未包含（默认不导出）");
+  L.push("- 声明：本文件为患者自述与自记数据，不构成医学判断；未记录的日期不代表未测量或未执行。");
+  L.push("");
+  cks.forEach(function(k){
+    var d=SC[k], mt=expCycleMeta(k);
+    var kms=ms.filter(function(m){ return m.ck===k; });
+    var kns=ns.filter(function(r){ return r.ck===k; });
+    var kps=ps.filter(function(p){ return p.ck===k; });
+    L.push("---");
+    L.push("");
+    L.push("## 周期："+mt.label+"（"+mt.person+" · "+mt.role+" · 周期标识："+k+(mt.archived?" · 已归档":"")+"）");
+    L.push("");
+    if(EX.msel.num && kms.length){
+      L.push("### 数值监测记录");
+      L.push("");
+      L.push("| 实际发生时间 | 类型 | 数值 | 单位 | 测量条件 | 备注 |");
+      L.push("|---|---|---|---|---|---|");
+      kms.slice().sort(function(a,b){ return a.ts<b.ts?-1:1; }).forEach(function(m){
+        var v = (m.sys!=null)? (m.sys+" / "+m.dia) : m.value;
+        L.push("| "+mdEsc(m.ts)+" | "+mdEsc(m.kind)+" | "+mdEsc(v)+" | "+mdEsc(m.unit)+" | "+(m.condition?mdEsc(m.condition):"—")+" | "+(m.desc||m.note? mdEsc(m.desc||m.note):"—")+" |");
+      });
+      L.push("");
+    }
+    if(EX.msel.num && EX.msel.num && kms.length===0){ L.push("### 数值监测记录"); L.push(""); L.push("（本周期无数值记录）"); L.push(""); }
+    if(EX.msel.txt && kns.length){
+      L.push("### 症状与文字记录（患者原始文字）");
+      L.push("");
+      kns.forEach(function(r){
+        L.push("- ["+mdEsc(r.meta)+"] "+mdEsc(r.txt)+(r.priv?"（私人记录）":"")+"");
+      });
+      L.push("");
+    }
+    if(EX.msel.txt && kns.length===0){ L.push("### 症状与文字记录"); L.push(""); L.push("（本周期无文字记录）"); L.push(""); }
+    if(kps.length){
+      L.push("### 伤口照片记录（元数据；附件原件未包含在此文件中，可在应用内查看）");
+      L.push("");
+      kps.forEach(function(p){ L.push("- "+mdEsc(p.ts)+(p.desc?" · "+mdEsc(p.desc):"")+" · 附件标识："+mdEsc(p.id)+"（周期："+k+"）"); });
+      L.push("");
+    }
+  });
+  L.push("---");
+  L.push("");
+  L.push("> 导出后的文件不会随后续记录修改自动更新；原始记录在应用内修改后，重新导出即为最新内容。");
+  return L.join("\n");
+}
+function buildRecCsv(){
+  var cks=expCycleKeys();
+  var ms=colMeasurements(cks);
+  var rows=[["周期标识","患者","记录者","类型","实际发生时间","收缩压","舒张压","数值","单位","测量条件","备注"]];
+  ms.forEach(function(m){
+    var mt=expCycleMeta(m.ck);
+    rows.push([m.ck, mt.person, mt.role, m.kind, m.ts, (m.sys!=null?m.sys:""), (m.dia!=null?m.dia:""), (m.value!=null?m.value:""), m.unit, m.condition, m.desc||m.note||""]);
+  });
+  return rows.map(function(r){ return r.map(csvCell).join(","); }).join("\r\n");
+}
+
+/* ---------- C：沟通卡导出（严格用当前已核对的展示版内容；草稿/失效状态如实标注） ---------- */
+function cardExportState(){
+  if(!UI.confirmed) return {st:"draft", label:"未核对草稿（不可作为已核对版本使用）"};
+  if(UI.stale) return {st:"stale", label:"已失效：核对后有新记录未纳入，需重新核对（不得再作为已核对版本导出）"};
+  return {st:"ok", label:"本人已核对"};
+}
+function buildCardMd(){
+  var d=D();
+  var fam=(active==="ortho" && UI.verifier!=="self");
+  var who = fam? "家属周雯核对" : "本人已核对";
+  var cs=cardExportState();
+  var L=[];
+  L.push("# 复诊沟通卡 · "+d.person);
+  L.push("");
+  L.push("- 周期："+d.cycleLabel+"（周期标识："+d.key+"）");
+  L.push("- 导出时间："+expNow());
+  L.push("- 核对状态：**"+cs.label+"**"+(cs.st==="ok"? "（"+who+(UI.confirmedAt? " · "+UI.confirmedAt:"")+"）":""));
+  L.push("- 声明：患者／家属自述及核对，非医学专业审核。");
+  L.push("- 内容说明：由程序按当前展示版逐句导出，导出时不重新生成摘要、不调用 AI。");
+  L.push("");
+  L.push("## 一、已有安排及处理记录");
+  RL.s1.forEach(function(x,i){ L.push((i+1)+". "+mdEsc(x.t)+"（"+mdEsc(x.s)+"）"); });
+  L.push("");
+  L.push("## 二、本人或家属记录的变化");
+  RL.s2.forEach(function(x){
+    if(x.wrong){
+      if(x.state==="removed") L.push("- （已删除：无依据结论）");
+      else L.push("- "+mdEsc(x.state==="fixed"? x.fix : x.wrong)+"（"+mdEsc(x.state==="fixed"? x.fs : x.s)+"）");
+    } else L.push("- "+mdEsc(x.t)+"（"+mdEsc(x.s)+"）");
+  });
+  L.push("");
+  L.push("## 三、想问的问题");
+  d.questions.forEach(function(q,i){ L.push((i+1)+". "+mdEsc(q)+"（来源：待问清单）"); });
+  L.push("");
+  var ph=(d.photos||[]).length, dc=(d.docs||[]).length;
+  if(ph||dc){
+    L.push("## 附：客观资料（元数据；附件原件未包含在此文件中，可在应用内查看）");
+    (d.photos||[]).forEach(function(p){ L.push("- 伤口照片 · "+mdEsc(p.ts)+(p.desc?" · "+mdEsc(p.desc):"")+" · 附件标识："+mdEsc(p.id)); });
+    (d.docs||[]).forEach(function(x){ L.push("- "+mdEsc(x.name)+" · "+docTypeName(x.type)+(x.date? " · 检查日期："+mdEsc(x.date):"")+" · 附件标识："+mdEsc(x.id)); });
+    L.push("");
+  }
+  if(cs.st!=="ok") L.push("> 注意：本卡当前为**"+cs.label+"**。如需对外展示已核对版本，请先在应用内完成核对后再导出。");
+  return L.join("\n");
+}
+
+/* ---------- C：完整周期资料导出（§5.4 结构；原始数据导出不要求先核对摘要） ---------- */
+function buildCycleMd(){
+  var k=(EX.cycleKey||active), d=SC[k];
+  var L=[];
+  var tasks=reviewTasks(d);
+  L.push("# 本轮诊后管理资料");
+  L.push("");
+  L.push("## 一、周期信息");
+  L.push("- 周期标识："+k);
+  L.push("- 场景："+(k==="ortho"?"踝关节骨折术后（周建国）":"高血压随访（陈淑兰）"));
+  L.push("- "+d.cycleLabel);
+  L.push("- 当前周期状态："+(d.archived?"已归档（软件提醒已停止，历史只读）":"进行中"));
+  L.push("- 导出时间："+expNow()+"（程序从本地记录生成，未经 AI 处理）");
+  L.push("");
+  if(EX.sections.plan){
+    L.push("## 二、原有诊疗安排");
+    d.cards.forEach(function(c){
+      L.push("");
+      L.push("### "+c.name+(c.tag? "（"+c.tag+"）":""));
+      L.push("- 核对状态："+(c.verified? "已核对（"+(c.verifier||"—")+"）":"未核对"));
+      c.lines.forEach(function(ln){ L.push("- "+mdEsc(ln)); });
+    });
+    L.push("");
+    L.push("- 医嘱原文（来源材料）：\""+mdEsc(d.srcText)+"\"");
+    L.push("");
+  }
+  if(EX.sections.act){
+    L.push("## 三、患者执行记录");
+    L.push("");
+    L.push("- 用药执行："+d.medLogs+" 次本人记录（程序按记录计数；未记录的日期不代表未执行）");
+    if(d.selA) L.push("- "+mdEsc(d.selA)+"（"+mdEsc(d.selAsub)+"）");
+    L.push("");
+  }
+  if(EX.sections.obs){
+    L.push("## 四、日常观察与监测");
+    L.push("");
+    var kms=(d.measurements||[]);
+    if(kms.length){
+      L.push("### 数值记录");
+      L.push("");
+      L.push("| 实际发生时间 | 类型 | 数值 | 单位 | 测量条件 | 备注 |");
+      L.push("|---|---|---|---|---|---|");
+      kms.slice().sort(function(a,b){ return a.ts<b.ts?-1:1; }).forEach(function(m){
+        var v=(m.sys!=null)? (m.sys+" / "+m.dia) : m.value;
+        L.push("| "+mdEsc(m.ts)+" | "+mdEsc(kindMeta(m.kind).name)+" | "+mdEsc(v)+" | "+mdEsc(m.unit)+" | "+(m.condition?mdEsc(m.condition):"—")+" | "+(m.desc||m.note? mdEsc(m.desc||m.note):"—")+" |");
+      });
+      L.push("");
+    }
+    L.push("### 文字与症状记录（患者原始文字）");
+    L.push("");
+    var kns=(d.records||[]).filter(function(r){ return EX.priv || !r.priv; });
+    if(kns.length) kns.forEach(function(r){ L.push("- ["+mdEsc(r.meta)+"] "+mdEsc(r.txt)+(r.priv?"（私人记录）":"")); });
+    else L.push("（无符合条件的文字记录）");
+    L.push("");
+    var kps=(d.photos||[]);
+    if(kps.length){
+      L.push("### 伤口照片记录（附件原件未包含在此文件中，可在应用内查看）");
+      L.push("");
+      kps.forEach(function(p){ L.push("- "+mdEsc(p.ts)+(p.desc?" · "+mdEsc(p.desc):"")+" · 附件标识："+mdEsc(p.id)); });
+      L.push("");
+    }
+    if(EX.priv) L.push("> 注意：本次导出包含私人记录（用户主动选择）。");
+    L.push("");
+  }
+  if(EX.sections.que){
+    L.push("## 五、待问问题");
+    L.push("");
+    if(d.questions.length) d.questions.forEach(function(q,i){ L.push((i+1)+". "+mdEsc(q)+"（状态：待问）"); });
+    else L.push("（无待问问题）");
+    L.push("");
+  }
+  if(EX.sections.att){
+    var kds=(d.docs||[]);
+    L.push("## 六、检查资料清单（附件原件未包含在此文件中，可在应用内查看）");
+    L.push("");
+    if(kds.length){
+      kds.forEach(function(x){
+        L.push("- 文件名："+mdEsc(x.name)+" · 类别："+docTypeName(x.type)+(x.date? " · 检查日期："+mdEsc(x.date):" · 检查日期：未提供")+" · 上传时间："+mdEsc(x.ts)+(x.task!==""&&x.task!=null? " · 关联复查："+mdEsc(tasks[x.task]||String(x.task)):"")+" · 附件标识："+mdEsc(x.id));
+      });
+    } else L.push("（本周期未上传检查资料）");
+    L.push("");
+  }
+  if(EX.sections.card){
+    L.push("## 七、复诊沟通卡");
+    L.push("");
+    var cs=cardExportState();
+    if(UI.confirmed && k===active){
+      var fam=(active==="ortho" && UI.verifier!=="self");
+      L.push("- 核对状态："+cs.label+"（"+(fam?"家属周雯核对":"本人已核对")+(UI.confirmedAt? " · "+UI.confirmedAt:"")+"）");
+      RL.s1.forEach(function(x,i){ L.push((i+1)+". "+mdEsc(x.t)+"（"+mdEsc(x.s)+"）"); });
+      L.push("- 二、本人或家属记录的变化：");
+      RL.s2.forEach(function(x){
+        if(x.wrong){ if(x.state==="removed") L.push("  - （已删除：无依据结论）"); else L.push("  - "+mdEsc(x.state==="fixed"? x.fix : x.wrong)); }
+        else L.push("  - "+mdEsc(x.t));
+      });
+      L.push("- 三、想问的问题：");
+      d.questions.forEach(function(q){ L.push("  - "+mdEsc(q)); });
+    } else {
+      L.push("- 本周期"+(k===active? "尚未生成已核对的复诊沟通卡（导出原始资料不要求先核对摘要；如需对外展示版，请先在「复诊」内完成核对）":"非当前展示周期，沟通卡以应用内核对状态为准")+"。");
+    }
+    L.push("");
+  }
+  L.push("> 本文件为患者自述与自记数据，不构成医学判断；未提供的信息不做推断。");
+  return L.join("\n");
+}
+
+/* ---------- 导出弹窗（三种导出共用，只换选项区） ---------- */
+function expPreview(){
+  var cks=expCycleKeys();
+  if(EX.kind==="rec"){
+    var ms=EX.msel.num? colMeasurements(cks):[];
+    var ns=EX.msel.txt? colNotes(cks).filter(function(r){ return EX.priv||!r.priv; }):[];
+    var ps=colPhotos(cks);
+    return {n:ms.length+ns.length+ps.length, txt:cks.length+" 个周期 · 数值 "+ms.length+" 条 · 文字 "+ns.length+" 条 · 照片元数据 "+ps.length+" 条"};
+  }
+  if(EX.kind==="cycle"){
+    var k=(EX.cycleKey||active), d=SC[k];
+    return {n:(d.measurements||[]).length+(d.records||[]).filter(function(r){return EX.priv||!r.priv;}).length+(d.questions||[]).length+(d.docs||[]).length, txt:(d.archived?"已归档周期（只读导出）":"进行中周期")+" · 周期标识 "+k+" · 记录 "+((d.measurements||[]).length+(d.records||[]).length)+" 条 · 待问 "+(d.questions||[]).length+" 项 · 检查资料 "+(d.docs||[]).length+" 份"};
+  }
+  return {n:0, txt:cardExportState().label};
+}
+function rowChk(id, checked, label, sub){
+  return '<label class="selrow" style="align-items:flex-start"><input type="checkbox" id="'+id+'"'+(checked?" checked":"")+'><span class="t">'+label+(sub?'<small>'+sub+'</small>':'')+'</span></label>';
+}
+function renderExportModal(){
+  var body=$("exp-body");
+  var h="";
+  if(EX.kind==="rec"){
+    $("exp-title").textContent="导出记录（B · 记录）";
+    h+='<div class="cap" style="font-size:12px;letter-spacing:1px;color:var(--ink-2);margin:2px 0 8px">导出范围</div>'+
+      '<div class="taskpick" style="margin-bottom:8px"><button data-scope="cycle"'+(EX.scope==="cycle"?' class="on"':'')+'>仅本周期</button><button data-scope="all"'+(EX.scope==="all"?' class="on"':'')+'>全部历史周期</button></div>'+
+      '<div class="cap" style="font-size:12px;letter-spacing:1px;color:var(--ink-2);margin:2px 0 8px">记录类型</div>'+
+      '<div class="expopt">'+rowChk("exp-mnum", EX.msel.num, "数值监测记录", "血压／血糖／疼痛评分等，含时间、数值、单位、测量条件")+
+      rowChk("exp-mtxt", EX.msel.txt, "症状与文字记录", "患者原话，含记录时间与记录者身份")+'</div>'+
+      '<div class="cap" style="font-size:12px;letter-spacing:1px;color:var(--ink-2);margin:2px 0 8px">文件格式</div>'+
+      '<div class="taskpick" style="margin-bottom:8px"><button data-fmt="md"'+(EX.fmt==="md"?' class="on"':'')+'>Markdown（.md）</button><button data-fmt="csv"'+(EX.fmt==="csv"?' class="on"':'')+'>CSV（.csv，仅数值）</button></div>';
+  } else if(EX.kind==="card"){
+    $("exp-title").textContent="导出沟通卡（C · 复诊）";
+    var cs=cardExportState();
+    h+='<div class="expprev"><b>当前卡片状态：'+esc(cs.label)+'</b><span style="font-size:12.5px;color:var(--ink-2)">严格按当前展示版导出；导出过程不重新生成摘要、不调用 AI。</span></div>'+
+      (cs.st!=="ok"? '<div class="expwarn">当前不是已核对版本，导出文件将如实标注状态，不能用于对外展示已核对卡。建议先在「复诊」内完成核对。</div>':'');
+  } else {
+    $("exp-title").textContent="导出本轮资料（C · 复诊）";
+    var pv=expPreview();
+    h+='<div class="expprev"><b>'+esc(pv.txt)+'</b><span style="font-size:12.5px;color:var(--ink-2)">原始资料导出不要求先核对摘要；导出内容仅所选数据块。</span></div>'+
+      '<div class="cap" style="font-size:12px;letter-spacing:1px;color:var(--ink-2);margin:2px 0 8px">包含内容（自选，不自动附加全部历史与私人信息）</div>'+
+      '<div class="expopt">'+rowChk("exp-s-plan", EX.sections.plan, "本轮医嘱与行动安排", "含核对状态与医嘱原文")+
+      rowChk("exp-s-act", EX.sections.act, "已记录的执行行为", "按真实记录计数，不推断未记录日期")+
+      rowChk("exp-s-obs", EX.sections.obs, "日常观察与数值记录", "患者原始文字＋数值，含测量条件")+
+      rowChk("exp-s-que", EX.sections.que, "待问问题", "患者原话与真实状态")+
+      rowChk("exp-s-card", EX.sections.card, "复诊沟通卡（如存在）", "含核对状态；草稿如实标注")+
+      rowChk("exp-s-att", EX.sections.att, "检查资料与照片附件索引", "仅元数据与标识；原件未打包")+'</div>';
+  }
+  if(EX.kind==="rec" || EX.kind==="cycle"){
+    h+='<div class="expopt">'+rowChk("exp-priv", EX.priv, "包含私人记录", "默认不包含；勾选后导出文件将含私人内容并明确标注")+'</div>';
+  }
+  var pv2=expPreview();
+  if(EX.kind!=="card"){
+    h+='<div class="expprev"><b>预计导出：'+pv2.n+' 条记录</b><span style="font-size:12.5px;color:var(--ink-2)">'+esc(pv2.txt)+'</span></div>';
+    if(pv2.n===0) h+='<div class="expempty">没有符合条件的记录，导出将生成空数据文件（如实标注，不虚构内容）。</div>';
+  }
+  h+='<div class="expwarn">导出文件中包含敏感健康信息，请妥善保管；文件导出后不会随后续修改自动更新。</div>';
+  body.innerHTML=h;
+  /* 选项交互 */
+  body.querySelectorAll("[data-scope]").forEach(function(b){ b.addEventListener("click", function(){
+    body.querySelectorAll("[data-scope]").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+    EX.scope=b.getAttribute("data-scope"); renderExportModal();
+  }); });
+    body.querySelectorAll("[data-fmt]").forEach(function(b){ b.addEventListener("click", function(){
+    body.querySelectorAll("[data-fmt]").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+    EX.fmt=b.getAttribute("data-fmt"); renderExportModal();
+  }); });
+  var bind=function(id, fn){ var el=body.querySelector("#"+id); if(el) el.addEventListener("change", function(){ fn(el.checked); renderExportModal(); }); };
+  bind("exp-mnum", function(v){ EX.msel.num=v; });
+  bind("exp-mtxt", function(v){ EX.msel.txt=v; });
+  bind("exp-priv", function(v){ EX.priv=v; });
+  bind("exp-s-plan", function(v){ EX.sections.plan=v; });
+  bind("exp-s-act", function(v){ EX.sections.act=v; });
+  bind("exp-s-obs", function(v){ EX.sections.obs=v; });
+  bind("exp-s-que", function(v){ EX.sections.que=v; });
+  bind("exp-s-card", function(v){ EX.sections.card=v; });
+  bind("exp-s-att", function(v){ EX.sections.att=v; });
+}
+function openExport(kind, cycleKey){
+  EX.kind=kind; EX.cycleKey=cycleKey||null; EX.priv=false;
+  if(kind==="rec"){ EX.scope="cycle"; EX.fmt="md"; EX.msel={num:true,txt:true}; }
+  if(kind==="cycle"){ EX.sections={plan:true,act:true,obs:true,que:true,card:true,att:true}; }
+  renderExportModal();
+  $("export-modal").classList.add("open");
+}
+function doExport(){
+  if(EX.kind==="rec"){
+    if(EX.fmt==="csv"){
+      var ms=colMeasurements(expCycleKeys());
+      if(ms.length===0){ toast("无数值记录可导出为 CSV"); return; }
+      downloadFile("诊后助手_数值记录_"+expStampFile()+".csv", buildRecCsv(), "text/csv");
+    } else downloadFile("诊后助手_记录导出_"+expStampFile()+".md", buildRecMd(), "text/markdown");
+  } else if(EX.kind==="card"){
+    downloadFile("诊后助手_复诊沟通卡_"+D().person+"_"+expStampFile()+".md", buildCardMd(), "text/markdown");
+  } else if(EX.kind==="cycle"){
+    var k=EX.cycleKey||active;
+    downloadFile("诊后助手_本轮资料_"+SC[k].person+"_"+expStampFile()+".md", buildCycleMd(), "text/markdown");
+  }
+  $("export-modal").classList.remove("open");
+}
+$("btn-export-rec").addEventListener("click", function(){ openExport("rec"); });
+$("btn-export-card").addEventListener("click", function(){ openExport("card"); });
+$("btn-export-cycle").addEventListener("click", function(){ openExport("cycle"); });
+$("btn-exp-go").addEventListener("click", doExport);
+$("btn-exp-cancel").addEventListener("click", function(){ $("export-modal").classList.remove("open"); });
+/* 历史周期弹窗内的按周期导出（v1.5：事件委托，行内容每次打开重渲染） */
+$("histmodal-list").addEventListener("click", function(e){
+  var b=e.target.closest("[data-expcycle]"); if(!b) return;
+  $("hist-modal").classList.remove("open");
+  openExport("cycle", b.getAttribute("data-expcycle"));
+});
+
+
 function renderAll(){ renderTop(); renderCheck(); renderHome(); renderRecord(); renderClarity(); renderSelect(); genReview(); renderCard(); }
 renderAll();
 show("cycle");
