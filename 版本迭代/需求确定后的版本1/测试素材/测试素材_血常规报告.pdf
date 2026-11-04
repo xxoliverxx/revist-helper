@@ -1,0 +1,111 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1051 >>
+stream
+BT
+/F1 22 Tf
+50 770 Td
+(Laboratory Report - CBC) Tj
+ET
+BT
+/F1 11 Tf
+50 730 Td
+(Laboratory Report - Routine Blood Test (CBC)) Tj
+ET
+BT
+/F1 11 Tf
+50 708 Td
+() Tj
+ET
+BT
+/F1 11 Tf
+50 686 Td
+(Patient: Zhou Jianguo    Gender: M    Age: 68) Tj
+ET
+BT
+/F1 11 Tf
+50 664 Td
+(Dept: Orthopedics        Sample Date: Nov 18, 2026) Tj
+ET
+BT
+/F1 11 Tf
+50 642 Td
+(Report No: 20261118-LAB-033) Tj
+ET
+BT
+/F1 11 Tf
+50 620 Td
+() Tj
+ET
+BT
+/F1 11 Tf
+50 598 Td
+(Item          Result      Unit      Ref.Range) Tj
+ET
+BT
+/F1 11 Tf
+50 576 Td
+(WBC           6.8         10^9/L    3.5-9.5) Tj
+ET
+BT
+/F1 11 Tf
+50 554 Td
+(RBC           4.2         10^12/L   4.0-5.5) Tj
+ET
+BT
+/F1 11 Tf
+50 532 Td
+(HGB           128         g/L       130-175) Tj
+ET
+BT
+/F1 11 Tf
+50 510 Td
+(PLT           210         10^9/L    125-350) Tj
+ET
+BT
+/F1 11 Tf
+50 488 Td
+(NEUT%         62.1        %         40-75) Tj
+ET
+BT
+/F1 11 Tf
+50 466 Td
+(CRP           8.2         mg/L      0-8) Tj
+ET
+BT
+/F1 11 Tf
+50 444 Td
+() Tj
+ET
+BT
+/F1 11 Tf
+50 422 Td
+((Synthetic test material - not a real medical report)) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001343 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1413
+%%EOF

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>诊后助手 · 需求确定版 v1.1（合成数据 · 双周期 · 历史记录/伤口照片/检查资料）</title>
+<title>诊后助手 · 需求确定版 v1.1.1（合成数据 · 双周期 · 历史记录/伤口照片/检查资料/加入待问）</title>
 <style>
 /* ===== 设计令牌 v0.2「纸感备忘录」（沿用） ===== */
 :root{
@@ -129,6 +129,13 @@ button{font-family:inherit}
 @keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .chip{font-size:10.5px;color:var(--brown);background:var(--apricot);border-radius:5px;padding:2px 8px}
 .chip.teal{color:var(--teal);background:var(--teal-tint)}
+/* v1.1.1 去向选择（保存原话时可勾选「加入待问」） */
+.destrow{display:flex;align-items:center;gap:10px;background:#F7F5EF;border:1px solid var(--hair);border-radius:10px;padding:11px 13px;cursor:pointer;-webkit-user-select:none;user-select:none}
+.destrow .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--hair);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;transition:background .15s ease,border-color .15s ease}
+.destrow.on{background:var(--teal-tint);border-color:var(--teal)}
+.destrow.on .box{background:var(--teal);border-color:var(--teal)}
+.destrow .dt{font-size:13.5px;font-weight:600;color:var(--ink)}
+.destrow .dd{font-size:11.5px;color:var(--ink-2);line-height:1.5}
 .warmnote{background:var(--apricot);border-radius:12px;padding:13px 15px;font-size:12.5px;line-height:1.8;color:var(--brown)}
 .warmnote b{font-weight:600}
 .filters{display:flex;gap:8px;flex-wrap:wrap}
@@ -422,6 +429,10 @@ button{font-family:inherit}
       <span style="font-size:14px;font-weight:600">或打字记录</span>
       <textarea class="field" id="record-input" rows="2" placeholder="想说什么直接写…"></textarea>
       <span class="errmsg" id="record-err">还没有内容，先写一句再保存。</span>
+      <div class="destrow" id="dest-ask" role="checkbox" aria-checked="false" tabindex="0">
+        <span class="box">✓</span>
+        <span style="flex:1"><span class="dt">加入待问</span><br><span class="dd">保存原话时，同时把它加入「复诊时想问」清单，复诊时带去问医生</span></span>
+      </div>
       <button class="btn b1" id="btn-save-record">保存原话</button>
       <div class="divider"></div>
       <div id="tpl-block"></div>
@@ -1423,9 +1434,16 @@ $("btn-save-record").addEventListener("click", function(){
   var inp=$("record-input"), v=inp.value.trim();
   if(!v){ $("record-err").classList.add("show"); inp.focus(); return; }
   $("record-err").classList.remove("show");
-  D().records.unshift({type:"quote",meta:"文字 · 刚刚 · "+(active==="ortho"?"周雯 代记":"本人"),chips:[],txt:"「"+v+"」",priv:false});
+  var toAsk=$("dest-ask").classList.contains("on");
+  D().records.unshift({type:"quote",meta:"文字 · 刚刚 · "+(active==="ortho"?"周雯 代记":"本人"),chips:toAsk?["待问"]:[],txt:"「"+v+"」",priv:false});
   inp.value="";
-  afterNewRecord("原话已保存"); renderRecord(); renderHome(); renderSelect();
+  if(toAsk){ D().questions.push(v); }
+  afterNewRecord(toAsk?"原话已保存，并加入复诊待问":"原话已保存"); renderRecord(); renderHome(); renderSelect();
+  $("dest-ask").classList.remove("on"); $("dest-ask").setAttribute("aria-checked","false");
+});
+$("dest-ask").addEventListener("click", function(){
+  var on=this.classList.toggle("on");
+  this.setAttribute("aria-checked", on?"true":"false");
 });
 document.querySelectorAll("#filters button").forEach(function(b){ b.addEventListener("click", function(){ UI.filter=b.getAttribute("data-f"); renderRecord(); }); });
 
