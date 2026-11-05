@@ -435,6 +435,9 @@ button{font-family:inherit}
 .recphotorow{display:flex;flex-direction:column}
 /* 记录列表中的缩略图 */
 .item .rphoto{width:76px;height:58px;object-fit:cover;border-radius:6px;border:1px solid var(--hair);cursor:pointer;margin-top:4px}
+/* v1.0.4 记录列表「整理表达」入口：把该条原话送去 AI 润色 */
+.item .clbtn{align-self:flex-start;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--teal);background:var(--teal-tint);border:none;border-radius:16px;padding:6px 13px;cursor:pointer;transition:background .15s ease}
+.item .clbtn:hover{background:#DCEAEE}
 </style>
 </head>
 <body>
@@ -1217,7 +1220,7 @@ function renderRecord(){
     });
   }
   var list=$("record-list"); list.innerHTML="";
-  d.records.forEach(function(r){
+  d.records.forEach(function(r, ri){
     if(UI.filter==="q" && r.chips.indexOf("待问")<0) return;
     if(UI.filter==="self" && !r.priv) return;
     var el=document.createElement("div");
@@ -1229,11 +1232,16 @@ function renderRecord(){
       var rp=(d.photos||[]).filter(function(p){return p.id===r.photoId;})[0];
       if(rp) rphoto='<img class="rphoto" data-rpview="'+esc(rp.id)+'" src="'+esc(rp.data)+'" alt="观察照片缩略图">';
     }
-    el.innerHTML='<span class="meta">'+esc(r.meta)+' '+chips+'</span><span class="txt">'+esc(r.txt)+'</span>'+rphoto;
+    var clBtn=(r.type==="quote" && !r.priv)? '<button class="clbtn" data-cli="'+ri+'" aria-label="把这条原话送去 AI 整理表达">整理表达 →</button>' : '';
+    el.innerHTML='<span class="meta">'+esc(r.meta)+' '+chips+'</span><span class="txt">'+esc(r.txt)+'</span>'+rphoto+clBtn;
     list.appendChild(el);
   });
   document.querySelectorAll("#filters button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-f")===UI.filter); });
   list.querySelectorAll("[data-rpview]").forEach(function(img){ img.addEventListener("click", function(){ viewPhoto(img.getAttribute("data-rpview")); }); });
+  list.querySelectorAll("[data-cli]").forEach(function(b){ b.addEventListener("click", function(){
+    var r=D().records[+b.getAttribute("data-cli")]; if(!r) return;
+    openClarityFor(r.txt, "你 的 原 话 · 选自记录（"+r.meta+"）");
+  }); });
   renderPhotoBlock();
   renderHistory();
 }
@@ -1909,7 +1917,13 @@ function doSaveRecord(v, toAsk, photoData){
     d.records[0].photoId=d.photos[d.photos.length-1].id;
   }
   if(toAsk){ d.questions.push(v); }
-  afterNewRecord(toAsk?"原话已保存，并加入复诊待问":"原话已保存"+(photoData?"（含观察照片）":"")); renderRecord(); renderHome(); renderSelect();
+  /* v1.0.4：新保存的原话进入「把问题说清楚」页，可主动选择 AI 润色表达；已直接加入待问的，采用按钮置已处理防重复 */
+  d.clQuote="「"+v+"」";
+  d.clCap="你 的 原 话 · 刚刚 · "+(active==="ortho"?"周雯 代记":"本人");
+  d.clDraft=v;
+  d.clAdopted=!!toAsk;
+  clLastCycle=null;
+  afterNewRecord(toAsk?"原话已保存，并加入复诊待问（可点记录里的「整理表达」润色）":"原话已保存"+(photoData?"（含观察照片）":"")); renderRecord(); renderHome(); renderSelect(); renderClarity();
   $("dest-ask").classList.remove("on"); $("dest-ask").setAttribute("aria-checked","false");
 }
 $("btn-save-record").addEventListener("click", function(){
@@ -1937,6 +1951,18 @@ document.querySelectorAll("#filters button").forEach(function(b){ b.addEventList
 
 /* 疑问页（v1.2：草稿可编辑、可再次整理、采用/保留真实入待问清单） */
 var clEditing=false, clLastCycle=null;
+/* v1.0.4 打通「原话 → AI 润色表达」闭环：从记录列表或新保存的原话进入整理页（设计方案 §六：用户主动选择某条原话后，AI 整理为待问问题） */
+function openClarityFor(txt, cap){
+  var d=D();
+  d.clQuote=txt;
+  d.clCap=cap;
+  d.clDraft=String(txt).replace(/^[「\s]+/,"").replace(/[」\s]+$/,"");
+  d.clAdopted=false;
+  clEditing=false; clLastCycle=null; /* renderClarity 检测周期切换才重载草稿，置空强制重载 */
+  persist();
+  renderClarity();
+  show("clarity");
+}
 function renderClarity(){
   var d=D();
   $("cl-quote").textContent=d.clQuote;
@@ -1978,17 +2004,22 @@ $("btn-adopt").addEventListener("click", function(){
   var t=$("cl-draft").value.replace(/[「」]/g,"").trim();
   if(!t){ toast("草稿是空的，先写一句或点「再次整理」"); return; }
   var d=D();
-  d.questions.push(t); d.clAdopted=true;
+  var existed=d.questions.indexOf(t)>=0;
+  if(!existed){ d.questions.push(t); }
+  d.clAdopted=true;
   markStale(); persist(); renderHome(); if(UI.current==="record") renderRecord();
   renderClarity();
-  toast("已采用该表达，加入复诊待问（来源：疑问整理页）");
+  toast(existed? "该表达已在待问清单中，未重复添加" : "已采用该表达，加入复诊待问（来源：疑问整理页）");
 });
 $("btn-keep").addEventListener("click", function(){
   var d=D();
-  d.questions.push(d.clQuote.replace(/[「」]/g,"").trim()); d.clAdopted=true;
+  var t=d.clQuote.replace(/[「」]/g,"").trim();
+  var existed=d.questions.indexOf(t)>=0;
+  if(!existed){ d.questions.push(t); }
+  d.clAdopted=true;
   markStale(); persist(); renderHome(); if(UI.current==="record") renderRecord();
   renderClarity();
-  toast("已保留原话，原样加入复诊待问（来源：疑问整理页）");
+  toast(existed? "原话已在待问清单中，未重复添加" : "已保留原话，原样加入复诊待问（来源：疑问整理页）");
 });
 var TPL=["下一次复查具体时间和地点是什么？","有哪些已交代的活动限制需要确认？","遇到问题应联系哪个既有渠道？","这次是否需要带上检查资料？"];
 $("tpl-list").innerHTML=TPL.map(function(q,i){ return '<div class="q"><span>'+esc(q)+'</span><button class="add" data-i="'+i+'">加入待问</button></div>'; }).join("");
