@@ -371,11 +371,21 @@ button{font-family:inherit}
 .docitem .dacts button{font-size:13px;color:var(--teal);background:none;border:none;cursor:pointer;padding:0;font-weight:600}
 .docitem .dacts button.del{color:var(--seal)}
 .docitem .linktask{font-size:13px;color:var(--brown);background:var(--apricot);border-radius:6px;padding:4px 8px;display:inline-flex;align-items:center;gap:4px}
-.docentry{display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:14px}
-.docentry .flab{font-size:13px;letter-spacing:.14em;color:var(--ink-2)}
+.docentry{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:14px}
+.docentry .flab{font-size:11px;letter-spacing:.14em;color:var(--ink-2);margin:0 0 6px}
+.docentry .finput:focus{border-color:var(--teal);outline:none}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pp-docbadge{width:56px;height:56px;border-radius:9px;border:1px solid var(--hair);background:var(--teal-tint);display:flex;align-items:center;justify-content:center;color:var(--teal);flex-shrink:0}
+.pp-docbadge svg{width:24px;height:24px}
 .taskpick{display:flex;gap:8px;flex-wrap:wrap}
-.taskpick button{font-size:13px;border:1.5px solid var(--hair);background:#fff;color:var(--ink-2);border-radius:9px;padding:7px 11px;cursor:pointer;text-align:left}
+.taskpick button{font-size:13px;border:1.5px solid var(--hair);background:#fff;color:var(--ink-2);border-radius:9px;padding:7px 11px;cursor:pointer;text-align:left;transition:border-color .15s,color .15s}
+.taskpick button:hover{border-color:var(--teal);color:var(--teal)}
 .taskpick button.on{border-color:var(--teal);color:var(--teal);font-weight:600}
+/* 分段式选择器（资料类型）：teal 实底激活态，替代平铺按钮 */
+.taskpick.seg{background:var(--paper);border:1px solid var(--hair);border-radius:11px;padding:3px;gap:2px;flex-wrap:nowrap}
+.taskpick.seg button{flex:1;border:none;background:transparent;border-radius:8px;padding:9px 4px;text-align:center;color:var(--ink-2)}
+.taskpick.seg button:hover{color:var(--teal)}
+.taskpick.seg button.on{background:var(--teal);color:#fff;font-weight:600}
 /* v1.5 统一导出 */
 .expline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-2);margin:2px 0}
 .expprev{background:var(--paper);border:1px solid var(--hair);border-radius:9px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
@@ -1562,16 +1572,28 @@ function renderDocBlock(){
   var docs=(d.docs||[]).slice().sort(function(a,b){ return a.ts<b.ts?1:-1; });
   $("doc-count").textContent=docs.length? docs.length+" 份":"暂无";
   var tasks=reviewTasks(d);
-  var h='<div class="docentry">'+
+  var h='<div class="docentry photopick">'+
     '<span class="lab" style="font-size:14px;font-weight:600">新增检查资料</span>'+
-    '<input type="file" id="doc-file" accept="image/*,.pdf" style="font-size:13px">'+
-    '<div><p class="flab" style="margin:0 0 6px">文件名（可选，默认用原文件名）</p><input class="finput" id="doc-name" placeholder="如：血常规报告"></div>'+
-    '<div><p class="flab" style="margin:0 0 6px">检查日期（可选）</p><input class="finput" id="doc-date" placeholder="如：11 月 18 日"></div>'+
-    '<div><p class="flab" style="margin:0 0 6px">资料类型（可选）</p><div class="taskpick" id="doc-type"><button class="on" data-t="lab">检验报告</button><button data-t="img">影像报告</button><button data-t="other">其他</button></div></div>';
+    '<label class="pp-area" for="doc-file" id="doc-area">'+
+      '<span class="pp-ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3h7.2c.4 0 .78.16 1.06.44l3.3 3.3c.28.28.44.66.44 1.06V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3.5V8h4.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>'+
+      '<span class="pp-txt"><b>添加报告或图片</b><i>支持照片 / PDF · 点击选择文件 · 仅保存在本机</i></span>'+
+      '<input type="file" id="doc-file" accept="image/*,.pdf">'+
+    '</label>'+
+    '<div class="pp-picked" id="doc-picked" style="display:none">'+
+      '<img id="doc-thumb" class="pp-thumb" alt="资料预览" style="display:none">'+
+      '<span class="pp-docbadge" id="doc-badge" style="display:none"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3h7.2c.4 0 .78.16 1.06.44l3.3 3.3c.28.28.44.66.44 1.06V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3.5V8h4.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>'+
+      '<span class="pp-name" id="doc-fname"></span>'+
+      '<span class="pp-acts"><label class="link" for="doc-file">重选</label></span>'+
+    '</div>'+
+    '<div class="dgrid">'+
+      '<div><p class="flab">名称（可选 · 默认原文件名）</p><input class="finput" id="doc-name" placeholder="如：血常规报告"></div>'+
+      '<div><p class="flab">检查日期（可选）</p><input class="finput" id="doc-date" placeholder="如：11 月 18 日"></div>'+
+    '</div>'+
+    '<div><p class="flab" style="margin:0 0 6px">资料类型</p><div class="taskpick seg" id="doc-type"><button class="on" data-t="lab">检验报告</button><button data-t="img">影像报告</button><button data-t="other">其他</button></div></div>';
   if(tasks.length){
     h+='<div><p class="flab" style="margin:0 0 6px">关联到复查任务（可选）</p><div class="taskpick" id="doc-task"><button class="on" data-t="">不关联</button>'+tasks.map(function(t,i){return '<button data-t="'+i+'">'+esc(t)+'</button>';}).join("")+'</div></div>';
   }
-  h+='<button class="btn b2" id="doc-save">保存资料</button>'+
+  h+='<button class="btn b1" id="doc-save">保存资料</button>'+
     '<p class="footnote">上传报告不等于检查已完成，也不等于医生已查看。资料仅本设备保存。</p>'+
     '</div>';
   if(docs.length){
@@ -1586,6 +1608,27 @@ function renderDocBlock(){
     }).join("")+'</div>';
   }
   db.innerHTML=h;
+  // 选择文件 → 已选预览态（图片显示缩略图，PDF 显示文档标识）
+  var df=$("doc-file");
+  if(df) df.addEventListener("change", function(){
+    var f=df.files && df.files[0];
+    var area=$("doc-area"), picked=$("doc-picked"), nm=$("doc-fname"), th=$("doc-thumb"), badge=$("doc-badge");
+    if(f && nm){
+      nm.textContent=f.name;
+      area.style.display="none"; picked.style.display="flex";
+      if(f.type && f.type.indexOf("image")===0){
+        th.style.display=""; badge.style.display="none";
+        var dr=new FileReader();
+        dr.onload=function(){ th.src=dr.result; };
+        dr.readAsDataURL(f);
+      } else {
+        th.style.display="none"; th.src=""; badge.style.display="flex";
+      }
+    } else if(nm){
+      nm.textContent=""; area.style.display=""; picked.style.display="none";
+      th.style.display="none"; th.src=""; badge.style.display="none";
+    }
+  });
   // 类型选择
   var dt=$("doc-type"); if(dt) dt.querySelectorAll("button").forEach(function(b){ b.addEventListener("click", function(){
     dt.querySelectorAll("button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
