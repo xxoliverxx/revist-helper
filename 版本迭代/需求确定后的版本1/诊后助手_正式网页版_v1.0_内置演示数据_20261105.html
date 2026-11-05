@@ -343,14 +343,22 @@ button{font-family:inherit}
 .photoitem .pacts button.del{color:var(--seal)}
 .photoentry{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:16px}
 .photoentry .lab{font-size:14px;font-weight:600}
-/* 自定义上传热区：替代裸露的原生 file input */
-.photoentry{display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:16px}
-.photoentry .lab{font-size:14px;font-weight:600}
-.photofile{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.photofile input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
-.photofile .pf-name{font-size:13px;color:var(--ink-2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.photofile .pf-name.has{color:var(--teal);font-weight:600}
+/* v1.0.1 统一照片选择卡（记一件事附件 / 观察照片记录共用；替代裸露的原生 file input 按钮） */
 .photoentry .field{margin-top:2px}
+.photopick input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+.pp-area{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px dashed var(--hair);border-radius:12px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s;-webkit-user-select:none;user-select:none}
+.pp-area:hover,.pp-area:active{border-color:var(--teal);background:var(--teal-tint)}
+.pp-ico{width:42px;height:42px;border-radius:12px;background:var(--teal-tint);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--teal)}
+.pp-ico svg{width:22px;height:22px}
+.pp-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pp-txt b{font-size:13.5px;font-weight:600;color:var(--ink)}
+.pp-txt i{font-style:normal;font-size:11.5px;color:var(--ink-2)}
+.pp-picked{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--hair);border-radius:12px;background:#fff}
+.pp-thumb{width:56px;height:56px;object-fit:cover;border-radius:9px;border:1px solid var(--hair);flex-shrink:0}
+.pp-name{flex:1;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pp-acts{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.pp-acts .link{font-size:12px;padding:6px 2px}
+.pp-acts label.link{cursor:pointer;color:var(--teal);white-space:nowrap}
 .care-note{background:var(--apricot);border-radius:9px;padding:10px 12px;font-size:13px;line-height:1.7;color:var(--brown);display:flex;gap:8px}
 .care-note svg{width:15px;height:15px;flex-shrink:0;margin-top:2px;opacity:.75}
 
@@ -412,13 +420,7 @@ button{font-family:inherit}
 .bpguide ul{margin:0;padding-left:20px;font-size:13px;line-height:1.8;color:var(--ink)}
 .bpguide .src{font-size:11.5px;color:var(--ink-2);line-height:1.6;margin:0}
 /* 记一件事 · 可选照片附件行 */
-.recphotorow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--hair);border-radius:9px;padding:10px 12px}
-.recphotorow .lab{font-size:13px;color:var(--ink-2)}
-.recphotorow .btn{height:38px;font-size:13px;width:auto;padding:0 14px}
-.recphotorow input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
-.recphotorow .pf-name{font-size:13px;color:var(--ink-2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.recphotorow .pf-name.has{color:var(--teal);font-weight:600}
-.recphotorow .rf-thumb{width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--hair)}
+.recphotorow{display:flex;flex-direction:column}
 /* 记录列表中的缩略图 */
 .item .rphoto{width:76px;height:58px;object-fit:cover;border-radius:6px;border:1px solid var(--hair);cursor:pointer;margin-top:4px}
 </style>
@@ -572,14 +574,18 @@ button{font-family:inherit}
         <span class="box">✓</span>
         <span style="flex:1"><span class="dt">加入待问</span><br><span class="dd">保存原话时，同时把它加入「复诊时想问」清单，复诊时带去问医生</span></span>
       </div>
-      <!-- v1.6 通用观察照片附件（可选，复用照片存储机制） -->
-      <div class="recphotorow" id="recphoto-row">
-        <span class="lab">附上照片（可选）</span>
-        <label class="btn b2" for="recphoto-file" style="cursor:pointer">选择文件</label>
-        <input type="file" accept="image/*" id="recphoto-file">
-        <span class="pf-name" id="recphoto-name">未选择照片，可留空</span>
-        <img id="recphoto-thumb" class="rf-thumb" alt="照片预览" style="display:none">
-        <button class="link" id="recphoto-clear" style="display:none">移除</button>
+      <!-- v1.0.1 通用观察照片附件：整卡可点的选图卡（可选，复用照片存储机制） -->
+      <div class="photopick recphotorow" id="recphoto-row">
+        <label class="pp-area" for="recphoto-file" id="recphoto-area">
+          <span class="pp-ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 9A2.5 2.5 0 0 1 6 6.5h1.4c.5 0 1-.25 1.28-.67l.72-1.03c.29-.42.77-.67 1.29-.67h2.62c.52 0 1 .25 1.29.67l.72 1.03c.29.42.77.67 1.28.67H18A2.5 2.5 0 0 1 20.5 9v7.5A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5V9z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12.7" r="3.4" stroke="currentColor" stroke-width="1.7"/></svg></span>
+          <span class="pp-txt"><b>附上照片</b><i>可选 · 点击拍照或从相册选择，随这条记录一起保存</i></span>
+          <input type="file" accept="image/*" id="recphoto-file">
+        </label>
+        <div class="pp-picked" id="recphoto-picked" style="display:none">
+          <img id="recphoto-thumb" class="pp-thumb" alt="照片预览">
+          <span class="pp-name" id="recphoto-name"></span>
+          <span class="pp-acts"><label class="link" for="recphoto-file">重选</label><button class="link" id="recphoto-clear">移除</button></span>
+        </div>
       </div>
       <button class="btn b1" id="btn-save-record">保存原话</button>
       <div class="divider"></div>
@@ -1409,10 +1415,17 @@ function renderPhotoBlock(){
     '</span></div>'+
     '<div class="photoentry">'+
       '<span class="lab">新增照片'+(isOrtho?'（伤口照片快捷入口）':'')+'</span>'+
-      '<div class="photofile">'+
-        '<label class="btn b2" for="photo-file" style="text-align:center;cursor:pointer">选择文件</label>'+
-        '<input type="file" accept="image/*" id="photo-file">'+
-        '<span class="pf-name" id="pf-name">未选择文件</span>'+
+      '<div class="photopick">'+
+        '<label class="pp-area" for="photo-file" id="photo-area">'+
+          '<span class="pp-ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 9A2.5 2.5 0 0 1 6 6.5h1.4c.5 0 1-.25 1.28-.67l.72-1.03c.29-.42.77-.67 1.29-.67h2.62c.52 0 1 .25 1.29.67l.72 1.03c.29.42.77.67 1.28.67H18A2.5 2.5 0 0 1 20.5 9v7.5A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5V9z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12.7" r="3.4" stroke="currentColor" stroke-width="1.7"/></svg></span>'+
+          '<span class="pp-txt"><b>添加照片</b><i>点击拍照或从相册选择 · 仅保存在本机</i></span>'+
+          '<input type="file" accept="image/*" id="photo-file">'+
+        '</label>'+
+        '<div class="pp-picked" id="photo-picked" style="display:none">'+
+          '<img id="photo-thumb" class="pp-thumb" alt="照片预览">'+
+          '<span class="pp-name" id="pf-name"></span>'+
+          '<span class="pp-acts"><label class="link" for="photo-file">重选</label></span>'+
+        '</div>'+
       '</div>'+
       '<textarea class="field" id="photo-desc" rows="2" placeholder="补充一句描述（如「拆线前第 3 天，伤口干燥」）" style="min-height:48px"></textarea>'+
       '<button class="btn b1" id="photo-save">保存照片</button>'+
@@ -1430,13 +1443,16 @@ function renderPhotoBlock(){
   var pf=$("photo-file");
   if(pf) pf.addEventListener("change", function(){
     var f=pf.files && pf.files[0];
-    var nameEl=$("pf-name");
+    var area=$("photo-area"), picked=$("photo-picked"), nameEl=$("pf-name"), pth=$("photo-thumb");
     if(f && nameEl){
       nameEl.textContent=f.name;
-      nameEl.classList.add("has");
+      area.style.display="none"; picked.style.display="flex";
+      var prd=new FileReader();
+      prd.onload=function(){ pth.src=prd.result; };
+      prd.readAsDataURL(f);
     } else if(nameEl){
-      nameEl.textContent="未选择文件";
-      nameEl.classList.remove("has");
+      nameEl.textContent="";
+      area.style.display=""; picked.style.display="none"; pth.src="";
     }
   });
   var ps=$("photo-save");
@@ -1447,7 +1463,7 @@ function renderPhotoBlock(){
     rd.onload=function(){
       var desc=$("photo-desc").value.trim();
       d.photos=d.photos||[];
-      d.photos.push({id:uid(), obsId:null, kind:"wound", data:rd.result, ts:nowTs(), desc:desc});
+      d.photos.push({id:uid(), obsId:null, kind:(isOrtho?"wound":"observe"), data:rd.result, ts:nowTs(), desc:desc});
       $("photo-desc").value=""; pf.value="";
       afterNewRecord("照片已保存（仅本设备）"); renderPhotoBlock(); persist();
     };
@@ -1820,27 +1836,23 @@ $("voice-btn").addEventListener("click", function(){
     renderRecord(); renderHome(); renderSelect();
   },2000);
 });
-/* v1.6 记一件事 · 可选照片附件（预览与清除） */
-$("recphoto-file").addEventListener("change", function(){
-  var f=this.files && this.files[0];
-  var nm=$("recphoto-name"), th=$("recphoto-thumb"), clr=$("recphoto-clear");
+/* v1.0.1 记一件事 · 可选照片附件：选图卡状态切换（未选态/已选预览态） */
+function setRecPhoto(f){
+  var area=$("recphoto-area"), picked=$("recphoto-picked"), nm=$("recphoto-name"), th=$("recphoto-thumb");
   if(f){
     try{ if(f.size>1500000){ toast("图片较大，本机存储可能存不下，建议换小图"); } }catch(e){}
-    nm.textContent=f.name; nm.classList.add("has"); clr.style.display="";
+    nm.textContent=f.name;
+    area.style.display="none"; picked.style.display="flex";
     var rd=new FileReader();
-    rd.onload=function(){ th.src=rd.result; th.style.display=""; };
+    rd.onload=function(){ th.src=rd.result; };
     rd.readAsDataURL(f);
   } else {
-    nm.textContent="未选择照片，可留空"; nm.classList.remove("has");
-    th.style.display="none"; th.src=""; clr.style.display="none";
+    nm.textContent=""; th.src="";
+    area.style.display=""; picked.style.display="none";
   }
-});
-$("recphoto-clear").addEventListener("click", function(){
-  var f=$("recphoto-file"); f.value="";
-  var nm=$("recphoto-name"), th=$("recphoto-thumb");
-  nm.textContent="未选择照片，可留空"; nm.classList.remove("has");
-  th.style.display="none"; th.src=""; this.style.display="none";
-});
+}
+$("recphoto-file").addEventListener("change", function(){ setRecPhoto(this.files && this.files[0]); });
+$("recphoto-clear").addEventListener("click", function(){ $("recphoto-file").value=""; setRecPhoto(null); });
 /* 保存记录（v1.6：可附一张观察照片；照片关联该条记录，复用照片存储，不自动分享、不做图像诊断） */
 function doSaveRecord(v, toAsk, photoData){
   var d=D();
@@ -1867,9 +1879,7 @@ $("btn-save-record").addEventListener("click", function(){
     rd.onload=function(){
       doSaveRecord(v, toAsk, rd.result);
       pf.value="";
-      var nm=$("recphoto-name"), th=$("recphoto-thumb");
-      nm.textContent="未选择照片，可留空"; nm.classList.remove("has");
-      th.style.display="none"; th.src=""; $("recphoto-clear").style.display="none";
+      setRecPhoto(null);
     };
     rd.readAsDataURL(f);
   } else doSaveRecord(v, toAsk, null);
