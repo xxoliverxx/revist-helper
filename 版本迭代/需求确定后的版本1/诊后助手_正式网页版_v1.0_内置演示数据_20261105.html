@@ -589,6 +589,10 @@ button{font-family:inherit}
         <span class="box">✓</span>
         <span style="flex:1"><span class="dt">加入待问</span><br><span class="dd">保存原话时，同时把它加入「复诊时想问」清单，复诊时带去问医生</span></span>
       </div>
+      <div class="destrow" id="dest-cl" role="checkbox" aria-checked="false" tabindex="0">
+        <span class="box">✓</span>
+        <span style="flex:1"><span class="dt">AI 整理成待问问题</span><br><span class="dd">保存后进入「把问题说清楚」，AI 把这句原话整理成清楚的待问问题，你核对后采用</span></span>
+      </div>
       <!-- v1.0.1 通用观察照片附件：整卡可点的选图卡（可选，复用照片存储机制） -->
       <div class="photopick recphotorow" id="recphoto-row">
         <label class="pp-area" for="recphoto-file" id="recphoto-area">
@@ -1925,12 +1929,14 @@ function doSaveRecord(v, toAsk, photoData){
   clLastCycle=null;
   afterNewRecord(toAsk?"原话已保存，并加入复诊待问（可点记录里的「整理表达」润色）":"原话已保存"+(photoData?"（含观察照片）":"")); renderRecord(); renderHome(); renderSelect(); renderClarity();
   $("dest-ask").classList.remove("on"); $("dest-ask").setAttribute("aria-checked","false");
+  $("dest-cl").classList.remove("on"); $("dest-cl").setAttribute("aria-checked","false");
 }
 $("btn-save-record").addEventListener("click", function(){
   var inp=$("record-input"), v=inp.value.trim();
   if(!v){ $("record-err").classList.add("show"); inp.focus(); return; }
   $("record-err").classList.remove("show");
   var toAsk=$("dest-ask").classList.contains("on");
+  var toCl=$("dest-cl").classList.contains("on");
   inp.value="";
   var pf=$("recphoto-file"), f=pf.files && pf.files[0];
   if(f){
@@ -1939,9 +1945,14 @@ $("btn-save-record").addEventListener("click", function(){
       doSaveRecord(v, toAsk, rd.result);
       pf.value="";
       setRecPhoto(null);
+      if(toCl) show("clarity"); /* 保存后直达「把问题说清楚」整理表达（doSaveRecord 已把整理页指向新原话） */
     };
     rd.readAsDataURL(f);
-  } else doSaveRecord(v, toAsk, null);
+  } else { doSaveRecord(v, toAsk, null); if(toCl) show("clarity"); }
+});
+$("dest-cl").addEventListener("click", function(){
+  var on=this.classList.toggle("on");
+  this.setAttribute("aria-checked", on?"true":"false");
 });
 $("dest-ask").addEventListener("click", function(){
   var on=this.classList.toggle("on");
